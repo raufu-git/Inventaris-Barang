@@ -17,4 +17,4 @@
             </div>
         </div>
     </div>
-</x-main-layout>t
+</x-main-layout>
