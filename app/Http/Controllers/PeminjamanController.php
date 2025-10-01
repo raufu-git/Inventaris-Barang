@@ -15,7 +15,7 @@ class PeminjamanController extends Controller implements HasMiddleware
     {
         return [
             new Middleware('permission:view peminjaman', only: ['index', 'show', 'laporan']),
-            new Middleware('permission:manage peminjaman', except: ['index', 'show', 'laporan', 'delete']),
+            new Middleware('permission:manage peminjaman', except: ['index', 'show', 'laporan']),
         ];
     }
 
