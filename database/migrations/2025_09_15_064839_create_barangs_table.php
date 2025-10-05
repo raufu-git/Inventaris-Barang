@@ -32,6 +32,10 @@ return new class extends Migration
             $table->date('tanggal_pengadaan');
             $table->string('gambar')->nullable();
             $table->timestamps();
+
+            $table->boolean('butuh_perawatan')->default(false);
+            $table->string('frekuensi_perawatan')->nullable();
+            $table->date('tanggal_perawatan_selanjutnya')->nullable();
         });
     }
 

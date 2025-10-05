@@ -64,13 +64,20 @@ class BarangController extends Controller implements HasMiddleware
             'satuan' => 'required|string|max:20',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
-            'gambar' => 'nullable|image|max:10048', // Maksimal 10MB
+            'gambar' => 'nullable|image|max:10048', 
+            'frekuensi_perawatan' => 'nullable|string',
+            'custom_frekuensi' => 'nullable|string',
+            'tanggal_perawatan_selanjutnya' => 'nullable|date',// Maksimal 10MB
         ]);
 
         if ($request->hasFile('gambar')) {
             $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
         }
+        if ($validated['frekuensi_perawatan'] === 'lainnya' && !empty($validated['custom_frekuensi'])) {
+            $validated['frekuensi_perawatan'] = $validated['custom_frekuensi'];
+        }
 
+        unset($validated['custom_frekuensi']); 
         Barang::create($validated);
 
         return redirect()->route('barang.index')->with('success', 'Data barang berhasil ditambahkan.');
@@ -109,7 +116,10 @@ class BarangController extends Controller implements HasMiddleware
             'satuan' => 'required|string|max:20',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif  |max:10048', // Maksimal 10MB
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif  |max:10048',
+            'frekuensi_perawatan' => 'nullable|string',
+            'custom_frekuensi' => 'nullable|string',
+            'tanggal_perawatan_selanjutnya' => 'nullable|date',
         ]);
 
         if ($request->hasFile('gambar')) {
@@ -120,6 +130,11 @@ class BarangController extends Controller implements HasMiddleware
             $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
         }
 
+        if ($validated['frekuensi_perawatan'] === 'lainnya' && !empty($validated['custom_frekuensi'])) {
+            $validated['frekuensi_perawatan'] = $validated['custom_frekuensi'];
+        }
+
+        unset($validated['custom_frekuensi']); 
         $barang->update($validated);
 
         return redirect()->route('barang.index')->with('success', 'Data barang berhasil diperbarui.');
@@ -164,5 +179,31 @@ class BarangController extends Controller implements HasMiddleware
             ->get();
 
         return response()->json($barangs);
+    }
+    
+   public function konfirmasiPerawatan($id)
+    {
+        $barang = Barang::findOrFail($id);
+
+        $frekuensi = strtolower($barang->frekuensi_perawatan ?? '');
+
+        // Ambil angka dari string (contoh: "3 bulan" -> 3)
+        preg_match('/(\d+)/', $frekuensi, $angka);
+        $jumlah = isset($angka[1]) ? (int)$angka[1] : 1; // default 1 kalau kosong
+
+        // Tentukan jenis interval
+        if (str_contains($frekuensi, 'bulan')) {
+            $barang->tanggal_perawatan_selanjutnya = \Carbon\Carbon::now()->addMonths($jumlah);
+        } elseif (str_contains($frekuensi, 'minggu')) {
+            $barang->tanggal_perawatan_selanjutnya = \Carbon\Carbon::now()->addWeeks($jumlah);
+        } elseif (str_contains($frekuensi, 'hari')) {
+            $barang->tanggal_perawatan_selanjutnya = \Carbon\Carbon::now()->addDays($jumlah);
+        } else {
+            $barang->tanggal_perawatan_selanjutnya = \Carbon\Carbon::now()->addMonth();
+        }
+
+        $barang->save();
+
+        return redirect()->back()->with('success', '✅ Jadwal perawatan berhasil diperbarui!');
     }
 }

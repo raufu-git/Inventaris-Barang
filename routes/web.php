@@ -30,7 +30,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/barang/laporan', [BarangController::class, 'cetakLaporan'])->name('barang.laporan');
     Route::get('/barang/search', [BarangController::class, 'search'])->name('barang.search');
     Route::resource('barang', BarangController::class);
-    
+    Route::post('/barang/{id}/konfirmasi-perawatan', [BarangController::class, 'konfirmasiPerawatan'])
+    ->name('barang.konfirmasiPerawatan');
+
 });
 
 require __DIR__.'/auth.php';
