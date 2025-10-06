@@ -10,6 +10,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 
 class BarangController extends Controller implements HasMiddleware
@@ -31,11 +32,18 @@ class BarangController extends Controller implements HasMiddleware
         $barangs = Barang::with(['kategori', 'lokasi'])
             ->when($search, function ($query, $search) {
                 $query->where('nama_barang', 'like', '%' . $search . '%')
-                        ->orWhere('kode_barang', 'like', '%' . $search . '%');
+                    ->orWhere('kode_barang', 'like', '%' . $search . '%');
             })
-            ->latest()->paginate(10)->withQueryString();
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
-            return view('barang.index', compact('barangs'));
+        $today = \Carbon\Carbon::today();
+        $reminders = Barang::whereNotNull('tanggal_perawatan_selanjutnya')
+            ->whereDate('tanggal_perawatan_selanjutnya', '<=', $today)
+            ->get();
+
+        return view('barang.index', compact('barangs', 'reminders'));
     }
 
     /**
