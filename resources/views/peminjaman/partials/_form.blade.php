@@ -27,6 +27,28 @@
 
             <div class="col-md-6">
                 <x-form-input 
+                    label="Nomor HP" 
+                    name="no_hp" 
+                    type="text" 
+                    :value="old('no_hp', $peminjaman->no_hp ?? '')" 
+                    placeholder="Contoh: 081234567890"
+                />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <x-form-input 
+                    label="Kelas / Divisi" 
+                    name="kelas_divisi" 
+                    type="text" 
+                    :value="old('kelas_divisi', $peminjaman->kelas_divisi ?? '')" 
+                    placeholder="Misal: XII RPL 1 / Tata Usaha"
+                />
+            </div>
+
+            <div class="col-md-6">
+                <x-form-input 
                     label="Jumlah Dipinjam" 
                     name="jumlah_pinjam" 
                     type="number" 
@@ -34,6 +56,7 @@
                     :value="old('jumlah_pinjam', $peminjaman->jumlah_pinjam ?? 1)" 
                 />
             </div>
+        </div>
 
             <div class="col-md-15">
                 <x-form-input 
