@@ -66,12 +66,11 @@
         @endphp
 
         <div class="toast align-items-center text-bg-light border-0 mb-2 shadow reminder-toast"
-            role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="8000"
+            role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500"
             style="animation-delay: {{ $index * 0.7 }}s;">
             <div class="toast-header {{ $warna }}">
                 <strong class="me-auto">🔧 Pengingat Perawatan</strong>
                 <small>{{ now()->translatedFormat('H:i') }}</small>
-                <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
             <div class="toast-body">
                 {!! $pesan !!}
@@ -81,11 +80,12 @@
 </div>
 
 <style>
-/* Animasi lembut */
+
 .reminder-toast {
     opacity: 0;
     transform: translateX(30px);
     animation: slideIn 0.6s ease-out forwards;
+    cursor: pointer; /* biar tahu bisa diklik */
 }
 
 @keyframes slideIn {
@@ -99,10 +99,9 @@
     }
 }
 
-/* Gaya nama barang biar lebih mencolok */
 .nama-barang {
     font-weight: 700;
-    color: #0d6efd; /* biru Bootstrap */
+    color: #0d6efd;
     background: rgba(13, 110, 253, 0.08);
     padding: 0 4px;
     border-radius: 4px;
@@ -113,10 +112,13 @@
     document.addEventListener('DOMContentLoaded', function () {
         const toastElList = document.querySelectorAll('.toast');
         toastElList.forEach((toastEl, i) => {
-            const delay = i * 400; // 0.7 detik per jeda
+            const delay = i * 400; 
             setTimeout(() => {
                 const toast = new bootstrap.Toast(toastEl);
                 toast.show();
+
+                // Tutup toast kalau diklik
+                toastEl.addEventListener('click', () => toast.hide());
             }, delay);
         });
     });

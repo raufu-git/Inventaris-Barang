@@ -21,11 +21,30 @@
             <td>{{ $peminjaman->tanggal_kembali ?? '-' }}</td>
         </tr>
         <tr>
+        <tr>
             <th>Status</th>
             <td>
-            <span class="badge {{ $peminjaman->status == 'Dipinjam' ? 'bg-warning' : 'bg-success' }}">
-            {{ $peminjaman->status }}
-            </span>
+                <span class="badge {{ $peminjaman->status == 'Dipinjam' ? 'bg-warning text-dark' : 'bg-success' }}">
+                    {{ $peminjaman->status }}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <th>Kondisi Saat Dikembalikan</th>
+            <td>
+                @if ($peminjaman->kondisi_pengembalian)
+                    @if ($peminjaman->kondisi_pengembalian == 'Hilang')
+                        <span class="badge bg-danger">{{ $peminjaman->kondisi_pengembalian }}</span>
+                    @elseif ($peminjaman->kondisi_pengembalian == 'Rusak Ringan')
+                        <span class="badge bg-warning text-dark">{{ $peminjaman->kondisi_pengembalian }}</span>
+                    @elseif ($peminjaman->kondisi_pengembalian == 'Rusak Berat')
+                        <span class="badge bg-dark">{{ $peminjaman->kondisi_pengembalian }}</span>
+                    @else
+                        <span class="badge bg-success">{{ $peminjaman->kondisi_pengembalian }}</span>
+                    @endif
+                @else
+                    <span>-</span>
+                @endif
             </td>
         </tr>
         <tr>

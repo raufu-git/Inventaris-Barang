@@ -25,26 +25,26 @@ class BarangController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        $search = $request->search;
+public function index(Request $request)
+{
+    $search = $request->search;
 
-        $barangs = Barang::with(['kategori', 'lokasi'])
-            ->when($search, function ($query, $search) {
-                $query->where('nama_barang', 'like', '%' . $search . '%')
-                    ->orWhere('kode_barang', 'like', '%' . $search . '%');
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+    $barangs = Barang::with(['kategori', 'lokasi'])
+        ->when($search, function ($query, $search) {
+            $query->where('nama_barang', 'like', '%' . $search . '%')
+                  ->orWhere('kode_barang', 'like', '%' . $search . '%');
+        })
+        ->latest()
+        ->paginate(10)
+        ->withQueryString();
 
-        $today = \Carbon\Carbon::today();
-        $reminders = Barang::whereNotNull('tanggal_perawatan_selanjutnya')
-            ->whereDate('tanggal_perawatan_selanjutnya', '<=', $today)
-            ->get();
+    $today = \Carbon\Carbon::today();
+    $reminders = Barang::whereNotNull('tanggal_perawatan_selanjutnya')
+        ->whereDate('tanggal_perawatan_selanjutnya', '<=', $today)
+        ->get();
 
-        return view('barang.index', compact('barangs', 'reminders'));
-    }
+    return view('barang.index', compact('barangs', 'reminders'));
+}
 
     /**
      * Show the form for creating a new resource.
@@ -75,7 +75,7 @@ class BarangController extends Controller implements HasMiddleware
             'gambar' => 'nullable|image|max:10048', 
             'frekuensi_perawatan' => 'nullable|string',
             'custom_frekuensi' => 'nullable|string',
-            'tanggal_perawatan_selanjutnya' => 'nullable|date',// Maksimal 10MB
+            'tanggal_perawatan_selanjutnya' => 'nullable|date',
         ]);
 
         if ($request->hasFile('gambar')) {
@@ -178,11 +178,25 @@ class BarangController extends Controller implements HasMiddleware
         return $pdf->stream('laporan-inventaris-barang.pdf');
     }
 
-     public function search(Request $request)
+    public function search(Request $request)
     {
         $query = $request->get('q');
-        $barangs = \App\Models\Barang::where('nama_barang', 'like', "%{$query}%")
-            ->select('id', 'nama_barang', 'jumlah_barang', 'kondisi')
+
+        $barangs = \App\Models\Barang::with(['kategori:id,nama_kategori', 'lokasi:id,nama_lokasi'])
+            ->where('nama_barang', 'like', "%{$query}%")
+            ->select(
+                'id',
+                'nama_barang',
+                'jumlah_barang',
+                'kondisi',
+                'kategori_id',
+                'lokasi_id',
+                'satuan',
+                'tanggal_pengadaan',
+                'updated_at',
+                'frekuensi_perawatan',
+                'tanggal_perawatan_selanjutnya'
+            )
             ->limit(10)
             ->get();
 

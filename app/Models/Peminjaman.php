@@ -22,6 +22,7 @@ class Peminjaman extends Model
     'status',
     'keterangan',
     'gambar',
+    'kondisi_pengembalian'
     ];
 
 

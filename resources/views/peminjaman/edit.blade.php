@@ -1,6 +1,6 @@
 <x-main-layout :title-page="__('Edit Peminjaman')">
   <div class="row">
-    <form class="card col-lg-6" action="{{ route('peminjaman.update', $peminjaman->id) }}" method="POST">
+    <form class="card col-lg-8" action="{{ route('peminjaman.update', $peminjaman->id) }}" method="POST">
       @csrf
       @method('PUT')
       <div class="card-body">

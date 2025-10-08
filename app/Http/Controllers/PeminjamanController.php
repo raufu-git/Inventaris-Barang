@@ -110,20 +110,38 @@ class PeminjamanController extends Controller implements HasMiddleware
         return $pdf->stream('laporan-peminjaman.pdf');
     }
 
-    public function kembalikan(Peminjaman $peminjaman)
+    public function kembalikan(Request $request, Peminjaman $peminjaman)
     {
-        if ($peminjaman->status === 'Dikembalikan') {
-            return back()->with('error', 'Barang ini sudah dikembalikan.');
+        if ($peminjaman->status === 'Dikembalikan' || $peminjaman->status === 'Hilang') {
+            return back()->with('error', 'Barang ini sudah dikembalikan atau dilaporkan hilang.');
         }
 
-        $peminjaman->update([
-            'status' => 'Dikembalikan',
-            'tanggal_kembali' => now(),
+        $request->validate([
+            'kondisi_pengembalian' => 'nullable|string|max:255',
         ]);
 
-        $peminjaman->barang->increment('jumlah_barang', $peminjaman->jumlah_pinjam);
+        $kondisi = $request->kondisi_pengembalian ?: 'Baik';
 
-        return back()->with('success', 'Barang berhasil dikembalikan.');
-    }   
+        // Jika kondisi pengembalian "Hilang", ubah status jadi Hilang
+        $statusBaru = $kondisi === 'Hilang' ? 'Hilang' : 'Dikembalikan';
 
+        $peminjaman->update([
+            'status' => $statusBaru,
+            'tanggal_kembali' => now(),
+            'kondisi_pengembalian' => $kondisi,
+        ]);
+
+        // Tambah stok hanya jika barang tidak hilang
+        if ($kondisi !== 'Hilang') {
+            $peminjaman->barang->increment('jumlah_barang', $peminjaman->jumlah_pinjam);
+        }
+
+        // Jika kondisi rusak, update kondisi barang juga
+        if (in_array($kondisi, ['Rusak Ringan', 'Rusak Berat'])) {
+            $peminjaman->barang->update(['kondisi' => $kondisi]);
+        }
+
+        return back()->with('success', 'Status peminjaman berhasil diperbarui.');
+    }
+ 
 }
