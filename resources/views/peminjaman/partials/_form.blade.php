@@ -2,11 +2,11 @@
     {{-- 📋 Form Input (kiri) --}}
     <div class="col-md-6">
         {{-- 🔍 Pencarian Barang --}}
-        <div class="col-md-12 position-relative">
+        <div class="col-md-12 position-relative mb-3">
             <label for="barang_nama" class="form-label fw-bold">Cari Barang</label>
             <div class="position-relative">
                 <input type="text" id="barang_nama" class="form-control pe-4" placeholder="Ketik nama barang..." autocomplete="off" required>
-                <input type="hidden" id="barang_id" name="barang_id"> <!-- 👈 hidden input ini dikirim ke server -->
+                <input type="hidden" id="barang_id" name="barang_id">
                 <button type="button" id="clear-barang" class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y me-2" style="display:none;">&times;</button>
                 <div id="loading-spinner" class="position-absolute top-50 end-0 translate-middle-y me-4" style="display:none;">
                     <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
@@ -15,94 +15,68 @@
             <ul id="daftar-barang" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></ul>
         </div>
 
-        {{-- 👤 Nama, Jumlah, Tanggal --}}
+        {{-- 👤 Nama, HP, Kelas, Jumlah --}}
         <div class="row mb-3">
             <div class="col-md-6">
-                <x-form-input 
-                    label="Nama Peminjam" 
-                    name="nama_peminjam" 
-                    :value="old('nama_peminjam', $peminjaman->nama_peminjam ?? '')" 
-                />
+                <x-form-input label="Nama Peminjam" name="nama_peminjam" :value="old('nama_peminjam', $peminjaman->nama_peminjam ?? '')" />
             </div>
-
             <div class="col-md-6">
-                <x-form-input 
-                    label="Nomor HP" 
-                    name="no_hp" 
-                    type="text" 
-                    :value="old('no_hp', $peminjaman->no_hp ?? '')" 
-                    placeholder="Contoh: 081234567890"
-                />
+                <div class="col-md-6 mb-3">
+                <label for="nomor_hp" class="form-label">Nomor HP</label>
+                <div class="input-group">
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="countryBtn">
+                    🇮🇩 +62
+                    </button>
+                    <ul class="dropdown-menu" style="max-height: 150px; overflow-y: auto;">
+                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇮🇩', '+62')">🇮🇩 Indonesia (+62)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇲🇾', '+60')">🇲🇾 Malaysia (+60)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇸🇬', '+65')">🇸🇬 Singapore (+65)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇹🇭', '+66')">🇹🇭 Thailand (+66)</a></li>
+                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇺🇸', '+1')">🇺🇸 United States (+1)</a></li>
+                    </ul>
+                    <input type="tel" class="form-control" id="nomor_hp" name="nomor_hp" placeholder="812-3456-7890">
+                </div>
+                </div>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-md-6">
-                <x-form-input 
-                    label="Kelas / Divisi" 
-                    name="kelas_divisi" 
-                    type="text" 
-                    :value="old('kelas_divisi', $peminjaman->kelas_divisi ?? '')" 
-                    placeholder="Misal: XII RPL 1 / Tata Usaha"
-                />
+                <x-form-input label="Kelas / Divisi" name="kelas_divisi" type="text" :value="old('kelas_divisi', $peminjaman->kelas_divisi ?? '')" placeholder="Misal: XII RPL 1 / Tata Usaha" />
             </div>
-
             <div class="col-md-6">
-                <x-form-input 
-                    label="Jumlah Dipinjam" 
-                    name="jumlah_pinjam" 
-                    type="number" 
-                    min="1" 
-                    :value="old('jumlah_pinjam', $peminjaman->jumlah_pinjam ?? 1)" 
-                />
+                <x-form-input label="Jumlah Dipinjam" name="jumlah_pinjam" type="number" min="1" :value="old('jumlah_pinjam', $peminjaman->jumlah_pinjam ?? 1)" />
             </div>
         </div>
 
-            <div class="col-md-15">
-                <x-form-input 
-                    label="Tanggal Pinjam" 
-                    name="tanggal_pinjam" 
-                    type="date" 
-                    :value="old('tanggal_pinjam', $peminjaman->tanggal_pinjam ?? '')" 
-                />
+        {{-- 📅 Tanggal --}}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <x-form-input label="Tanggal Pinjam" name="tanggal_pinjam" type="date" :value="old('tanggal_pinjam', $peminjaman->tanggal_pinjam ?? '')" />
+            </div>
+            <div class="col-md-6">
+                <x-form-input label="Tanggal Kembali" name="tanggal_kembali" type="date" :value="old('tanggal_kembali', $peminjaman->tanggal_kembali ?? '')" />
             </div>
         </div>
 
-        {{-- 📅 Tanggal Kembali & Keterangan --}}
-        <div class="row mb-3 mt-2">
-            <div class="col-md-15">
-                <x-form-input 
-                    label="Tanggal Kembali" 
-                    name="tanggal_kembali" 
-                    type="date" 
-                    :value="old('tanggal_kembali', $peminjaman->tanggal_kembali ?? '')" 
-                />
-            </div>
-
+        {{-- 📝 Keterangan --}}
+        <div class="row mb-3">
             <div class="col-md-12">
-                <x-form-input 
-                    label="Keterangan" 
-                    name="keterangan" 
-                    :value="old('keterangan', $peminjaman->keterangan ?? '')" 
-                />
+                <x-form-input label="Keterangan" name="keterangan" :value="old('keterangan', $peminjaman->keterangan ?? '')" />
             </div>
         </div>
 
         {{-- 🟦 Tombol --}}
         <div class="mt-4">
-            <x-primary-button>
-                {{ isset($update) ? __('Update') : __('Simpan') }}
-            </x-primary-button>
+            <x-primary-button>{{ isset($update) ? __('Update') : __('Simpan') }}</x-primary-button>
             <x-tombol-kembali :href="route('peminjaman.index')" />
         </div>
     </div>
 
-        {{-- 🧾 Info Barang (kanan) --}}
+    {{-- 🧾 Info Barang (kanan) --}}
     <div class="col-md-4">
         <div id="info-barang" class="border rounded p-3 bg-light shadow-sm h-100" style="display:none;">
-            <h6 class="fw-bold mb-3 text-primary">
-                <i class="bi bi-box-seam"></i> Info Barang
-            </h6>
+            <h6 class="fw-bold mb-3 text-primary"><i class="bi bi-box-seam"></i> Info Barang</h6>
             <p class="mb-2"><b>Nama:</b> <span id="info_nama">-</span></p>
             <p class="mb-2"><b>Kategori:</b> <span id="info_kategori"></span></p>
             <p class="mb-2"><b>Lokasi:</b> <span id="info_lokasi"></span></p>
@@ -115,6 +89,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- STYLEs -->
 <style>
@@ -362,4 +337,87 @@ $(document).ready(function() {
         $('#info-barang').show();
     @endif
 });
+</script>
+<!-- 🌍 Intl Tel Input -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
+
+<style>
+.phone-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 4px 8px;
+  background: #fff;
+  width: fit-content;
+  position: relative;
+}
+
+.country-dropdown {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 5px;
+  font-size: 14px;
+}
+
+.country-dropdown span {
+  margin-right: 3px;
+}
+
+.country-list {
+  display: none;
+  position: absolute;
+  top: 38px;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  max-height: 130px;
+  overflow-y: auto;
+  z-index: 100;
+  width: 180px;
+}
+
+.country-list div {
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.country-list div:hover {
+  background: #f1f1f1;
+}
+
+.phone-group input {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  width: 160px;
+}
+</style>
+
+<div class="phone-group">
+  <div class="country-dropdown" onclick="toggleDropdown()">
+    <span id="flag">🇮🇩</span>
+    <span id="code">+62</span>
+    <span>▼</span>
+  </div>
+  <input type="tel" id="phone" placeholder="812-3456-7890">
+
+  <div class="country-list" id="dropdown">
+    <div onclick="selectCountry('🇮🇩', '+62')">🇮🇩 Indonesia (+62)</div>
+    <div onclick="selectCountry('🇲🇾', '+60')">🇲🇾 Malaysia (+60)</div>
+    <div onclick="selectCountry('🇸🇬', '+65')">🇸🇬 Singapore (+65)</div>
+    <div onclick="selectCountry('🇹🇭', '+66')">🇹🇭 Thailand (+66)</div>
+    <div onclick="selectCountry('🇺🇸', '+1')">🇺🇸 United States (+1)</div>
+  </div>
+</div>
+
+<script>
+function setCountry(flag, code) {
+  document.getElementById("countryBtn").innerHTML = `${flag} ${code}`;
+}
 </script>

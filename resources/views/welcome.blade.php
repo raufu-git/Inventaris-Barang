@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="{{ asset('bootstrap/font/bootstrap-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('bootstrap/css/bootstrap.min.css') }}">
+
 </head>
 <body class="d-flex flex-column min-vh-100 bg-light">
     @include('welcome-partials.navbar')
