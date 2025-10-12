@@ -21,12 +21,13 @@ class KategoriController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
+        $sortOrder = $request->get('sort', 'desc');
         $search = $request->search ? $request->search : null;
 
         $kategoris = Kategori::when($search, function ($query, $search) {
                 $query->where('nama_kategori', 'like', '%' . $search . '%');
             })
-            ->latest()->paginate(10)->withQueryString();
+            ->orderBy('created_at', $sortOrder)->paginate(10)->withQueryString();
 
             return view('kategori.index', compact('kategoris'));
     }

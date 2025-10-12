@@ -66,29 +66,120 @@
 </x-table-list>
 
 <style>
-    .modern-select {
+/* 🌈 Fresh Modern Blue Select for Swal */
+.swal2-select-modern {
     width: 100%;
     padding: 10px 14px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #f9f9f9;
+    border-radius: 10px;
+    border: 1px solid #b0c9ff;
+    background: linear-gradient(145deg, #eaf1ff, #dce8ff);
+    color: #1b2a4e;
+    font-size: 14px;
+    font-family: 'Segoe UI', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    outline: none;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    background-image: none;
+}
+
+/* Hover dan Focus */
+.swal2-select-modern:hover {
+    background: linear-gradient(145deg, #dee8ff, #ecf3ff);
+    border-color: #6c9eff;
+    box-shadow: 0 0 6px rgba(108, 158, 255, 0.25);
+}
+
+.swal2-select-modern:focus {
+    background: linear-gradient(145deg, #e3ecff, #f3f7ff);
+    border-color: #6c9eff;
+    box-shadow: 0 0 8px rgba(108, 158, 255, 0.35);
+}
+
+/* Dropdown Option Styling */
+.swal2-select-modern option {
+    background: #f6f9ff;
+    color: #1b2a4e;
+    padding: 10px;
     font-size: 14px;
+    border-radius: 6px;
     transition: all 0.2s ease;
+}
+
+/* Saat di-hover (dropdown list) */
+.swal2-select-modern option:hover,
+.swal2-select-modern option:checked {
+    background: linear-gradient(145deg, #c7dbff, #e3ecff) !important;
+    color: #0f1a38;
+}
+
+/* Untuk browser yang pakai highlight default (kayak di screenshot) */
+.swal2-select-modern option:focus,
+.swal2-select-modern option:active {
+    background: linear-gradient(145deg, #c7dbff, #e3ecff) !important;
+    color: #0f1a38 !important;
+}
+
+/* Pop animation biar halus pas muncul */
+@keyframes popIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.swal2-select-modern {
+    animation: popIn 0.25s ease-out;
+}
+
+/* ===== STYLE KHUSUS UNTUK SORT SELECT ===== */
+.sort-select {
+    height: 34px;
+    padding: 6px 12px;
+    font-size: 13.5px;
+    border-radius: 8px;
+    border: 1px solid #a3d2a1;
+    background: linear-gradient(145deg, #f2fdf2, #d9f7d9);
+    color: #155724;
+    font-weight: 500;
     cursor: pointer;
-}
-
-.modern-select:hover {
-    border-color: #198754;
-    box-shadow: 0 0 5px rgba(25, 135, 84, 0.3);
-}
-
-.modern-select:focus {
+    transition: all 0.2s ease;
     outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%23155724' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.sort-select:hover {
+    background: linear-gradient(145deg, #e3f9e3, #c9f1c9);
+    box-shadow: 0 0 6px rgba(25, 135, 84, 0.25);
     border-color: #198754;
-    box-shadow: 0 0 8px rgba(25, 135, 84, 0.5);
+}
+
+.sort-select:focus {
+    background: #eafcea;
+    box-shadow: 0 0 8px rgba(25, 135, 84, 0.4);
+    border-color: #198754;
+}
+
+/* Style dropdown list (Firefox & Chrome yang support) */
+.sort-select option {
+    background: #f0fff0;
+    color: #155724;
+    padding: 10px;
+    font-size: 13.5px;
 }
 
 </style>
@@ -109,7 +200,7 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
                 <p><strong>Keterangan:</strong> ${keterangan}</p>
                 <hr>
                 <label for="kondisi_pengembalian" class="fw-bold">Kondisi Barang Saat Dikembalikan:</label>
-                <select id="kondisi_pengembalian" class="modern-select mt-2">
+                <select id="kondisi_pengembalian" class="swal2-select-modern mt-2">
                     <option value="">Sama seperti sebelumnya</option>
                     <option value="Baik">Baik</option>
                     <option value="Rusak Ringan">Rusak Ringan</option>
@@ -121,7 +212,7 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
         showCancelButton: true,
         confirmButtonText: 'Ya, Kembalikan',
         cancelButtonText: 'Batal',
-        confirmButtonColor: '#198754',
+        confirmButtonColor: '#3a6dd8',
         cancelButtonColor: '#d33',
         preConfirm: () => {
             return {
@@ -146,5 +237,4 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
         }
     });
 }
-
 </script>

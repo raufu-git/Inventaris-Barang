@@ -18,6 +18,7 @@ class UserController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
+        $sortOrder = $request->get('sort', 'desc');
         $search = $request->search ? $request->search : null;
 
         $users = User::with('roles')
@@ -25,7 +26,7 @@ class UserController extends Controller implements HasMiddleware
                 $query->where('name', 'like', '%' . $search . '%')
                         ->orWhere('email', 'like', '%' . $search . '%');
             })
-            ->oldest()->paginate(10)->withQueryString();
+            ->orderBy('created_at', $sortOrder)->paginate(10)->withQueryString();
 
             return view('user.index', compact('users'));
     }

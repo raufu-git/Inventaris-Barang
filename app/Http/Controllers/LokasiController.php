@@ -21,12 +21,15 @@ class LokasiController extends Controller implements HasMiddleware
      */
     public function index(Request $request)
     {
+        $sortOrder = $request->get('sort', 'desc');
         $search = $request->search ? $request->search : null;
 
         $lokasis = Lokasi::when($search, function ($query, $search) {
                 $query->where('nama_lokasi', 'like', '%' . $search . '%');
             })
-            ->latest()->paginate(10)->withQueryString();
+            ->orderBy('created_at', $sortOrder)
+            ->paginate(10)
+            ->withQueryString();
 
             return view('lokasi.index', compact('lokasis'));
     }

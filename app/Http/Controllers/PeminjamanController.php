@@ -21,11 +21,19 @@ class PeminjamanController extends Controller implements HasMiddleware
 
     public function index(Request $request)
     {
-        $search = $request->search ?? null;
+        $sortOrder = $request->get('sort', 'desc');
+        $search = $request->get('search');
+
         $peminjamans = Peminjaman::with('barang')
-            ->when($search, fn($q, $s) => $q->where('nama_peminjam', 'like', "%{$s}%"))
-            ->orWhereHas('barang', fn($q) => $q->where('nama_barang', 'like', "%{$search}%"))
-            ->latest()->paginate(10)->withQueryString();
+            ->when($search, function ($q, $s) {
+                $q->where(function ($sub) use ($s) {
+                    $sub->where('nama_peminjam', 'like', "%{$s}%")
+                        ->orWhereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
+                });
+            })
+            ->orderBy('created_at', $sortOrder) // <-- ini pakai parameter sort
+            ->paginate(10)
+            ->withQueryString();
 
         return view('peminjaman.index', compact('peminjamans'));
     }
@@ -126,7 +134,7 @@ class PeminjamanController extends Controller implements HasMiddleware
         $statusBaru = $kondisi === 'Hilang' ? 'Hilang' : 'Dikembalikan';
 
         $peminjaman->update([
-            'status' => $statusBaru,
+            'status' => 'Dikembalikan'  ,
             'tanggal_kembali' => now(),
             'kondisi_pengembalian' => $kondisi,
         ]);
