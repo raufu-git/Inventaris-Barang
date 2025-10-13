@@ -53,6 +53,7 @@ class PeminjamanController extends Controller implements HasMiddleware
             'jumlah_pinjam' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|max:10048',
+            'kondisi_awal' => 'nullable|string|max:25'
         ]);
 
         $barang = Barang::find($validated['barang_id']);
@@ -66,15 +67,17 @@ class PeminjamanController extends Controller implements HasMiddleware
             'tanggal_pinjam' => $validated['tanggal_pinjam'],
             'jumlah_pinjam' => $validated['jumlah_pinjam'],
             'keterangan' => $validated['keterangan'] ?? null,
+            'kondisi_awal' => $validated['kondisi_awal'],
         ]);
 
-        $barang->decrement('jumlah_barang', 1);
+        $barang->decrement('jumlah_barang', $validated['jumlah_pinjam']);
 
         return redirect()->route('peminjaman.index')->with('success', 'Data peminjaman berhasil ditambahkan.');
     }
 
     public function show(Peminjaman $peminjaman)
     {
+        $peminjaman->load('barang'); // <-- ini penting
         return view('peminjaman.show', compact('peminjaman'));
     }
 
@@ -93,6 +96,7 @@ class PeminjamanController extends Controller implements HasMiddleware
             'jumlah_pinjam' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|max:10048',
+            'kondisi_awal' => 'nullable|string|max:25'
         ]);
 
         $oldStatus = $peminjaman->status;
@@ -104,7 +108,7 @@ class PeminjamanController extends Controller implements HasMiddleware
     public function destroy(Peminjaman $peminjaman)
     {
         if ($peminjaman->status === 'Dipinjam') {
-            $peminjaman->barang->increment('jumlah_barang', 1);
+            $peminjaman->barang->increment('jumlah_barang', $peminjaman->jumlah_pinjam);
         }
 
         $peminjaman->delete();
@@ -119,37 +123,42 @@ class PeminjamanController extends Controller implements HasMiddleware
     }
 
     public function kembalikan(Request $request, Peminjaman $peminjaman)
-    {
-        if ($peminjaman->status === 'Dikembalikan' || $peminjaman->status === 'Hilang') {
-            return back()->with('error', 'Barang ini sudah dikembalikan atau dilaporkan hilang.');
-        }
-
-        $request->validate([
-            'kondisi_pengembalian' => 'nullable|string|max:255',
-        ]);
-
-        $kondisi = $request->kondisi_pengembalian ?: 'Baik';
-
-        // Jika kondisi pengembalian "Hilang", ubah status jadi Hilang
-        $statusBaru = $kondisi === 'Hilang' ? 'Hilang' : 'Dikembalikan';
-
-        $peminjaman->update([
-            'status' => 'Dikembalikan'  ,
-            'tanggal_kembali' => now(),
-            'kondisi_pengembalian' => $kondisi,
-        ]);
-
-        // Tambah stok hanya jika barang tidak hilang
-        if ($kondisi !== 'Hilang') {
-            $peminjaman->barang->increment('jumlah_barang', $peminjaman->jumlah_pinjam);
-        }
-
-        // Jika kondisi rusak, update kondisi barang juga
-        if (in_array($kondisi, ['Rusak Ringan', 'Rusak Berat'])) {
-            $peminjaman->barang->update(['kondisi' => $kondisi]);
-        }
-
-        return back()->with('success', 'Status peminjaman berhasil diperbarui.');
+{
+    // Cegah pengembalian dobel
+    if ($peminjaman->status === 'Dikembalikan' || $peminjaman->status === 'Hilang') {
+        return back()->with('error', 'Barang ini sudah dikembalikan atau dilaporkan hilang.');
     }
+
+    // Validasi input
+    $request->validate([
+        'kondisi_pengembalian' => 'nullable|string|max:255',
+    ]);
+
+    // Kalau kosong, ambil dari kondisi_awal
+    $kondisi = $request->kondisi_pengembalian ?: $peminjaman->kondisi_awal;
+
+    // Tentukan status baru
+    $statusBaru = $kondisi === 'Hilang' ? 'Hilang' : 'Dikembalikan';
+
+    // Update data peminjaman
+    $peminjaman->update([
+        'status' => 'Dikembalikan',
+        'tanggal_kembali' => now(),
+        'kondisi_pengembalian' => $kondisi,
+    ]);
+
+    // Tambah stok kalau tidak hilang
+    if ($kondisi !== 'Hilang') {
+        $peminjaman->barang->increment('jumlah_barang', $peminjaman->jumlah_pinjam);
+    }
+
+    // Jika kondisi rusak, update kondisi barang
+    if (in_array($kondisi, ['Rusak Ringan', 'Rusak Berat'])) {
+        $peminjaman->barang->update(['kondisi' => $kondisi]);
+    }
+
+    return back()->with('success', 'Status peminjaman berhasil diperbarui.');
+}
+
  
 }

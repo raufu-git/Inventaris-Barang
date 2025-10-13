@@ -2,12 +2,11 @@
     <div class="col-md-7 d-flex align-items-center gap-2 flex-wrap">
         <x-tombol-tambah label="Tambah User" href="{{ route('user.create') }}" />
 
-
-        <form action="{{ route('user.index') }}" method="GET" class="d-inline-block">
-            <select name="sort" class="sort-select" onchange="this.form.submit()">
-                <option value="desc" {{ request('sort') == 'desc' ? 'selected' : '' }}>⬇️ Terbaru → Lama</option>
-                <option value="asc" {{ request('sort') == 'asc' ? 'selected' : '' }}>⬆️ Lama → Terbaru</option>
-            </select>
+        <form id="sortForm" action="{{ route('user.index') }}" method="GET" class="d-inline-block">
+            <input type="hidden" name="sort" id="sortInput" value="{{ request('sort', 'desc') }}">
+            <button type="button" id="sortToggle" class="sort-toggle">
+                {{ request('sort') == 'asc' ? '⬆️' : '⬇️' }}
+            </button>
         </form>
     </div>
 
@@ -17,3 +16,11 @@
         </div>
     </div>
 </div>
+
+<script>
+document.getElementById('sortToggle').addEventListener('click', function() {
+    const sortInput = document.getElementById('sortInput');
+    sortInput.value = sortInput.value === 'asc' ? 'desc' : 'asc';
+    document.getElementById('sortForm').submit();
+});
+</script>

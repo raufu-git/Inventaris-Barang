@@ -24,13 +24,14 @@ class Peminjaman extends Model
     'status',
     'keterangan',
     'gambar',
-    'kondisi_pengembalian'
+    'kondisi_pengembalian',
+    'kondisi_awal',
     ];
 
 
     public function barang(): BelongsTo
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Barang::class, 'barang_id');
     }
 
     public function user(): BelongsTo

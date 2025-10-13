@@ -108,47 +108,32 @@
 }
 
 /* ===== STYLE KHUSUS UNTUK SORT SELECT ===== */
-.sort-select {
-    height: 34px;
-    padding: 6px 12px;
-    font-size: 13.5px;
-    border-radius: 8px;
-    border: 1px solid #a3d2a1;
+/* 🌿 Soft Sort Toggle Button */
+.sort-toggle {
     background: linear-gradient(145deg, #f2fdf2, #d9f7d9);
     color: #155724;
+    border: 1px solid #a3d2a1;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='%23155724' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
-    padding-right: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.sort-select:hover {
+.sort-toggle:hover {
     background: linear-gradient(145deg, #e3f9e3, #c9f1c9);
     box-shadow: 0 0 6px rgba(25, 135, 84, 0.25);
     border-color: #198754;
+    transform: scale(1.02);
 }
 
-.sort-select:focus {
+.sort-toggle:active {
     background: #eafcea;
-    box-shadow: 0 0 8px rgba(25, 135, 84, 0.4);
-    border-color: #198754;
+    transform: scale(0.98);
 }
 
-/* Style dropdown list (Firefox & Chrome yang support) */
-.sort-select option {
-    background: #f0fff0;
-    color: #155724;
-    padding: 10px;
-    font-size: 13.5px;
-}
 </style>
 
 <script>

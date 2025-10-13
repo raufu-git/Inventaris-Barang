@@ -9,6 +9,26 @@
             <td>{{ $peminjaman->barang->nama_barang }}</td>
         </tr>
         <tr>
+            <th>Kondisi Saat Dipinjam</th>
+            <td>
+                @php
+                    $kondisiAwal = $peminjaman->kondisi_awal ?? '-';
+                @endphp
+
+                @if ($kondisiAwal === 'Baik')
+                    <span class="badge bg-info">{{ $kondisiAwal }}</span>
+                @elseif ($kondisiAwal === 'Rusak Ringan')
+                    <span class="badge bg-warning text-dark">{{ $kondisiAwal }}</span>
+                @elseif ($kondisiAwal === 'Rusak Berat')
+                    <span class="badge bg-danger">{{ $kondisiAwal }}</span>
+                @elseif ($kondisiAwal === 'Hilang')
+                    <span class="badge bg-dark">{{ $kondisiAwal }}</span>
+                @else
+                    <span class="badge bg-secondary">{{ $kondisiAwal }}</span>
+                @endif
+            </td>
+        </tr>
+        <tr>
             <th>Jumlah Dipinjam</th>
             <td>{{ $peminjaman->jumlah_pinjam }}</td>
         </tr>

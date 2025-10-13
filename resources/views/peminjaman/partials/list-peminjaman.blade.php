@@ -4,6 +4,8 @@
             <th>#</th>
             <th>Nama Peminjam</th>
             <th>Nama Barang</th>
+            <th>Jumlah</th>
+            <th>Tanggal Pinjam</th>
             <th>Status</th>
             <th>&nbsp;</th>
         </tr>
@@ -14,6 +16,8 @@
             <td>{{ $peminjamans->firstItem() + $index }}</td>
             <td>{{ $peminjaman->nama_peminjam }}</td>
             <td>{{ $peminjaman->barang->nama_barang }}</td>
+            <td>{{ $peminjaman->jumlah_pinjam }} {{ $peminjaman->barang->satuan }}</td>
+            <td>{{ $peminjaman->tanggal_pinjam }}</td>
             <td>
                 @if ($peminjaman->status == 'Dipinjam')
                     <span class="badge bg-warning text-dark">{{ $peminjaman->status }}</span>
@@ -41,7 +45,7 @@
                     :id="$peminjaman->id"
                     :nama_peminjam="$peminjaman->nama_peminjam"
                     :barang="$peminjaman->barang->nama_barang"
-                    :kondisi="$peminjaman->kondisi ?? 'Baik'"
+                    :kondisi="$peminjaman->kondisi_awal ?? '-'"
                     :jumlah="$peminjaman->jumlah_pinjam"
                     :keterangan="$peminjaman->keterangan ?? '-'"
                 />
@@ -140,46 +144,30 @@
 }
 
 /* ===== STYLE KHUSUS UNTUK SORT SELECT ===== */
-.sort-select {
-    height: 34px;
-    padding: 6px 12px;
-    font-size: 13.5px;
-    border-radius: 8px;
-    border: 1px solid #a3d2a1;
+/* 🌿 Soft Sort Toggle Button */
+.sort-toggle {
     background: linear-gradient(145deg, #f2fdf2, #d9f7d9);
     color: #155724;
+    border: 1px solid #a3d2a1;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    outline: none;
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='%23155724' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 16px;
-    padding-right: 32px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-.sort-select:hover {
+.sort-toggle:hover {
     background: linear-gradient(145deg, #e3f9e3, #c9f1c9);
     box-shadow: 0 0 6px rgba(25, 135, 84, 0.25);
     border-color: #198754;
+    transform: scale(1.02);
 }
 
-.sort-select:focus {
+.sort-toggle:active {
     background: #eafcea;
-    box-shadow: 0 0 8px rgba(25, 135, 84, 0.4);
-    border-color: #198754;
-}
-
-/* Style dropdown list (Firefox & Chrome yang support) */
-.sort-select option {
-    background: #f0fff0;
-    color: #155724;
-    padding: 10px;
-    font-size: 13.5px;
+    transform: scale(0.98);
 }
 
 </style>

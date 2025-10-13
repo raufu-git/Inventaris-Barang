@@ -1,4 +1,4 @@
-@props(['href' => '#', 'type', 'id' => null, 'nama_peminjam' => null, 'barang' => null, 'jumlah' => null, 'keterangan' => null])
+@props(['href' => '#', 'type', 'id' => null, 'nama_peminjam' => null, 'barang' => null, 'kondisi' => null, 'jumlah' => null, 'keterangan' => null])
 
 @switch($type)
     @case('show')
@@ -22,7 +22,14 @@
 
     @case('return')
         <button type="button" class="btn btn-sm btn-success" title="Kembalikan"
-            onclick="confirmKembalikan({{ $id }}, '{{ $nama_peminjam }}', '{{ $barang }}', '{{ $jumlah }}', '{{ $keterangan }}')">
+            onclick="confirmKembalikan(
+                {{ $id }},
+                '{{ addslashes($nama_peminjam) }}',
+                '{{ addslashes($barang) }}',
+                '{{ addslashes($kondisi) }}',
+                '{{ addslashes($jumlah) }}',
+                '{{ addslashes($keterangan ?? '-') }}'
+            )">
             <i class="bi bi-arrow-counterclockwise"></i>
         </button>
 

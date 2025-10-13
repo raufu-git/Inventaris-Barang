@@ -7,6 +7,7 @@
             <div class="position-relative">
                 <input type="text" id="barang_nama" class="form-control pe-4" placeholder="Ketik nama barang..." autocomplete="off" required>
                 <input type="hidden" id="barang_id" name="barang_id">
+                <input type="hidden" id="kondisi_awal" name="kondisi_awal">
                 <button type="button" id="clear-barang" class="btn btn-sm btn-light position-absolute top-50 end-0 translate-middle-y me-2" style="display:none;">&times;</button>
                 <div id="loading-spinner" class="position-absolute top-50 end-0 translate-middle-y me-4" style="display:none;">
                     <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
@@ -118,6 +119,7 @@ $(document).ready(function() {
     const $list = $('#daftar-barang');
     const $clear = $('#clear-barang');
     const $spinner = $('#loading-spinner');
+    
 
     // 🔍 Pencarian manual tanpa Select2
     $input.on('keyup', function() {
@@ -280,6 +282,7 @@ $(document).ready(function() {
             badgeHTML = '<span class="badge bg-secondary">'+(data.kondisi || '-')+'</span>';
         }
         $('#info_kondisi').html(badgeHTML);
+        $('#kondisi_awal').val(data.kondisi || '');
 
         $('#info_pengadaan').text(formatTanggal(data.tanggal_pengadaan));
         $('#info_update').text(formatTanggal(data.updated_at));

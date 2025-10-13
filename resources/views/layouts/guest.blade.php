@@ -11,7 +11,7 @@
     <!-- Css -->
     <link href="{{ asset('bootstrap/font/bootstrap-icons.min.css') }}" rel="stylesheet">
     <link href="{{ asset('bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ asset('images/logoku.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/ikon.png?v=2') }}">
 
 
     <!-- Scripts -->
