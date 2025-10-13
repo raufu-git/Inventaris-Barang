@@ -19,7 +19,7 @@
             <td>{{ $barang->nama_barang }}</td>
             <td>{{ $barang->kategori->nama_kategori }}</td>
             <td>{{ $barang->lokasi->nama_lokasi }}</td>
-                        <td>{{ $barang->jumlah_barang }}  {{ $barang->satuan }}</td>
+            <td>{{ $barang->jumlah_barang }}  {{ $barang->satuan }}</td>
             <td>
                 @if ($barang->kondisi === 'Baik')
                     <span class="badge bg-info">{{ $barang->kondisi }}</span>
