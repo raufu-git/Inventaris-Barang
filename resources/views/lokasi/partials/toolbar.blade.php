@@ -6,8 +6,12 @@
 
         <form id="sortForm" action="{{ route('lokasi.index') }}" method="GET" class="d-inline-block">
             <input type="hidden" name="sort" id="sortInput" value="{{ request('sort', 'desc') }}">
-            <button type="button" id="sortToggle" class="sort-toggle">
-                {{ request('sort') == 'asc' ? '⬆️' : '⬇️' }}
+            <button type="button" id="sortToggle" class="btn btn-light border btn-sm sort-toggle">
+                @if(request('sort') == 'asc')
+                    <i class="bi bi-sort-down-alt"></i> Lama
+                @else
+                    <i class="bi bi-sort-down"></i> Baru
+                @endif
             </button>
         </form>
     </div>

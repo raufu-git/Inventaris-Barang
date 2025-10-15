@@ -17,6 +17,10 @@
             <td>{{ $barang->jumlah_barang }} {{ $barang->satuan }}</td>
         </tr>
         <tr>
+            <th>Sumber Dana</th>
+            <td>{{ $barang->sumber_dana }}</td>
+        </tr>
+        <tr>
             <th>Kondisi</th>
             <td>
                 @php

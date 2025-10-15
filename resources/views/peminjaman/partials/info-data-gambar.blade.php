@@ -9,6 +9,10 @@
             <td>{{ $peminjaman->barang->nama_barang }}</td>
         </tr>
         <tr>
+            <th>Sumber Dana</th>
+            <td>{{ $peminjaman->barang->sumber_dana }}</td>
+        </tr>
+        <tr>
             <th>Kondisi Saat Dipinjam</th>
             <td>
                 @php
@@ -30,7 +34,7 @@
         </tr>
         <tr>
             <th>Jumlah Dipinjam</th>
-            <td>{{ $peminjaman->jumlah_pinjam }}</td>
+            <td>{{ $peminjaman->jumlah_pinjam }} {{ $peminjaman->barang->satuan }}</td>
         </tr>
         <tr>
             <th>Tanggal Pinjam</th>
@@ -70,6 +74,10 @@
         <tr>
             <th>Keterangan</th>
             <td>{{ $peminjaman->keterangan ?? '-' }}</td>
+        </tr>
+        <tr>
+            <th>Catatan Pengembalian</th>
+            <td>{{ $peminjaman->catatan_pengembalian ?? '-' }}</td>
         </tr>
         <tr>
             <th>Terakhir Diperbarui</th>

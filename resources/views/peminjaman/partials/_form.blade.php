@@ -22,22 +22,13 @@
                 <x-form-input label="Nama Peminjam" name="nama_peminjam" :value="old('nama_peminjam', $peminjaman->nama_peminjam ?? '')" />
             </div>
             <div class="col-md-6">
-                <div class="col-md-6 mb-3">
-                <label for="nomor_hp" class="form-label">Nomor HP</label>
-                <div class="input-group">
-                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="countryBtn">
-                    🇮🇩 +62
-                    </button>
-                    <ul class="dropdown-menu" style="max-height: 150px; overflow-y: auto;">
-                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇮🇩', '+62')">🇮🇩 Indonesia (+62)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇲🇾', '+60')">🇲🇾 Malaysia (+60)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇸🇬', '+65')">🇸🇬 Singapore (+65)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇹🇭', '+66')">🇹🇭 Thailand (+66)</a></li>
-                    <li><a class="dropdown-item" href="#" onclick="setCountry('🇺🇸', '+1')">🇺🇸 United States (+1)</a></li>
-                    </ul>
-                    <input type="tel" class="form-control" id="nomor_hp" name="nomor_hp" placeholder="812-3456-7890">
-                </div>
-                </div>
+                <x-form-input 
+                    label="Nomor HP" 
+                    name="no_hp" 
+                    type="tel" 
+                    placeholder="Masukkan nomor HP" 
+                    :value="old('nomor_hp', $peminjaman->nomor_hp ?? '')" 
+                    />
             </div>
         </div>
 
@@ -83,6 +74,7 @@
             <p class="mb-2"><b>Lokasi:</b> <span id="info_lokasi"></span></p>
             <p class="mb-2"><b>Stok:</b> <span id="info_jumlah">-</span></p>
             <p class="mb-2"><b>Kondisi:</b> <span id="info_kondisi"></span></p>
+            <p class="mb-2"><b>Sumber Dana:</b> <span id="info_sumber_dana"></span></p>
             <p class="mb-2"><b>Tanggal Pengadaan:</b> <span id="info_pengadaan"></span></p>
             <p class="mb-2"><b>Terakhir Diperbarui:</b> <span id="info_update"></span></p>
             <p class="mb-2"><b>Frekuensi Perawatan:</b> <span id="info_frekuensi"></span></p>
@@ -175,7 +167,7 @@ $(document).ready(function() {
         const nama = $(this).find('b').text().trim();
 
         $input.val(nama);
-        $hidden.val(id);   
+        $hidden.val(parseInt(id)); // biar dikirim sebagai integer  
         $list.hide();
         $clear.show();
 
@@ -195,6 +187,7 @@ $(document).ready(function() {
                         satuan: selected.satuan,
                         kondisi: selected.kondisi,
                         tanggal_pengadaan: selected.tanggal_pengadaan,
+                        sumber_dana: selected.sumber_dana,
                         updated_at: selected.updated_at,
                         frekuensi_perawatan: selected.frekuensi_perawatan,
                         tanggal_perawatan_selanjutnya: selected.tanggal_perawatan_selanjutnya,
@@ -283,7 +276,7 @@ $(document).ready(function() {
         }
         $('#info_kondisi').html(badgeHTML);
         $('#kondisi_awal').val(data.kondisi || '');
-
+        $('#info_sumber_dana').text(data.sumber_dana || '-');
         $('#info_pengadaan').text(formatTanggal(data.tanggal_pengadaan));
         $('#info_update').text(formatTanggal(data.updated_at));
         $('#info_frekuensi').text(data.frekuensi_perawatan || '-');
@@ -303,6 +296,7 @@ $(document).ready(function() {
     // 🧱 Kalau ada data existing (edit mode)
     @if(isset($peminjaman) && $peminjaman->barang)
         const existing = {
+            id: '{{ $peminjaman->barang->id }}',
             text: '{{ $peminjaman->barang->nama_barang }}',
             kategori: '{{ $peminjaman->barang->kategori->nama_kategori ?? '-' }}',
             lokasi: '{{ $peminjaman->barang->lokasi->nama_lokasi ?? '-' }}',
@@ -310,10 +304,15 @@ $(document).ready(function() {
             satuan: '{{ $peminjaman->barang->satuan ?? '' }}',
             kondisi: '{{ $peminjaman->barang->kondisi ?? '-' }}',
             tanggal_pengadaan: '{{ $peminjaman->barang->tanggal_pengadaan }}',
+            sumber_dana:'{{ $peminjaman->barang->sumber_dana }}',
             updated_at: '{{ $peminjaman->barang->updated_at }}',
             frekuensi_perawatan: '{{ $peminjaman->barang->frekuensi_perawatan ?? '-' }}',
             tanggal_perawatan_selanjutnya: '{{ $peminjaman->barang->tanggal_perawatan_selanjutnya ?? '' }}',
         };
+
+        $('#barang_nama').val(existing.text);
+        $('#barang_id').val(existing.id);
+        $('#clear-barang').show();
 
         $('#info_nama').text(existing.text);
         $('#info_kategori').text(existing.kategori);
@@ -330,6 +329,7 @@ $(document).ready(function() {
         } else {
             badgeHTML = '<span class="badge bg-secondary">'+existing.kondisi+'</span>';
         }
+        $('#info_sumber_dana').text(existing.sumber_dana || '-');
         $('#info_kondisi').html(badgeHTML);
 
         $('#info_pengadaan').text(formatTanggal(existing.tanggal_pengadaan));
@@ -340,87 +340,4 @@ $(document).ready(function() {
         $('#info-barang').show();
     @endif
 });
-</script>
-<!-- 🌍 Intl Tel Input -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/css/intlTelInput.min.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
-
-<style>
-.phone-group {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: #fff;
-  width: fit-content;
-  position: relative;
-}
-
-.country-dropdown {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  margin-right: 5px;
-  font-size: 14px;
-}
-
-.country-dropdown span {
-  margin-right: 3px;
-}
-
-.country-list {
-  display: none;
-  position: absolute;
-  top: 38px;
-  left: 0;
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  max-height: 130px;
-  overflow-y: auto;
-  z-index: 100;
-  width: 180px;
-}
-
-.country-list div {
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.country-list div:hover {
-  background: #f1f1f1;
-}
-
-.phone-group input {
-  border: none;
-  outline: none;
-  font-size: 14px;
-  width: 160px;
-}
-</style>
-
-<div class="phone-group">
-  <div class="country-dropdown" onclick="toggleDropdown()">
-    <span id="flag">🇮🇩</span>
-    <span id="code">+62</span>
-    <span>▼</span>
-  </div>
-  <input type="tel" id="phone" placeholder="812-3456-7890">
-
-  <div class="country-list" id="dropdown">
-    <div onclick="selectCountry('🇮🇩', '+62')">🇮🇩 Indonesia (+62)</div>
-    <div onclick="selectCountry('🇲🇾', '+60')">🇲🇾 Malaysia (+60)</div>
-    <div onclick="selectCountry('🇸🇬', '+65')">🇸🇬 Singapore (+65)</div>
-    <div onclick="selectCountry('🇹🇭', '+66')">🇹🇭 Thailand (+66)</div>
-    <div onclick="selectCountry('🇺🇸', '+1')">🇺🇸 United States (+1)</div>
-  </div>
-</div>
-
-<script>
-function setCountry(flag, code) {
-  document.getElementById("countryBtn").innerHTML = `${flag} ${code}`;
-}
 </script>

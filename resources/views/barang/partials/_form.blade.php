@@ -124,8 +124,28 @@
     </div>
 </div>
 
-<div class="mb-3">
-    <x-form-input label="Gambar Barang" name="gambar" type="file" />
+<div class="row mb-3">
+    <div class="col-md-6">
+        @php
+            $sumberDana = [
+                ['value' => 'Pemerintah', 'label' => 'Pemerintah'],
+                ['value' => 'Swadaya', 'label' => 'Swadaya'],
+                ['value' => 'Donatur', 'label' => 'Donatur'],
+            ];
+        @endphp
+        <x-form-select 
+            label="Sumber Dana" 
+            name="sumber_dana" 
+            :value="old('sumber_dana', $barang->sumber_dana ?? '')"
+            :option-data="$sumberDana"
+            option-label="label" 
+            option-value="value" 
+        />
+    </div>
+
+    <div class="col-md-6">
+        <x-form-input label="Gambar Barang" name="gambar" type="file" />
+    </div>
 </div>
 
 <div class="mt-4">

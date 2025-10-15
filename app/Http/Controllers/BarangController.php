@@ -71,6 +71,7 @@ public function index(Request $request)
             'lokasi_id' => 'required|exists:lokasis,id',
             'jumlah_barang' => 'required|integer|min:0',
             'satuan' => 'required|string|max:20',
+            'sumber_dana' => 'nullable|string|max:100',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
             'gambar' => 'nullable|image|max:10048', 
@@ -123,6 +124,7 @@ public function index(Request $request)
             'lokasi_id' => 'required|exists:lokasis,id',
             'jumlah_barang' => 'required|integer|min:0',
             'satuan' => 'required|string|max:20',
+            'sumber_dana' => 'nullable|string|max:100',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
             'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif  |max:10048',
@@ -194,6 +196,7 @@ public function index(Request $request)
                 'lokasi_id',
                 'satuan',
                 'tanggal_pengadaan',
+                'sumber_dana',
                 'updated_at',
                 'frekuensi_perawatan',
                 'tanggal_perawatan_selanjutnya'

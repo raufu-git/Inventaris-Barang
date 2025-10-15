@@ -170,6 +170,35 @@
     transform: scale(0.98);
 }
 
+/* biar baris gak pecah ke bawah */
+.no-wrap-toolbar {
+    flex-wrap: nowrap !important;
+}
+
+/* biar dropdown status keliatan lebih clean */
+.filter-status {
+    background: linear-gradient(145deg, #f2fdf2, #d9f7d9);
+    color: #155724;
+    border: 1px solid #a3d2a1;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    appearance: none; /* hilangin ikon dropdown */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.filter-status:hover {
+    background: linear-gradient(145deg, #e3f9e3, #c9f1c9);
+    box-shadow: 0 0 6px rgba(25, 135, 84, 0.25);
+    border-color: #198754;
+    transform: scale(1.02);
+}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -183,7 +212,7 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
             <div style="text-align:left; font-family: Arial, sans-serif;">
                 <p><strong>Nama Peminjam:</strong> ${nama}</p>
                 <p><strong>Barang:</strong> ${barang}</p>
-                <p><strong>Kondisi:</strong> ${kondisi}</p>
+                <p><strong>Kondisi Awal:</strong> ${kondisi}</p>
                 <p><strong>Jumlah Dipinjam:</strong> ${jumlah}</p>
                 <p><strong>Keterangan:</strong> ${keterangan}</p>
                 <hr>
@@ -195,6 +224,19 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
                     <option value="Rusak Berat">Rusak Berat</option>
                     <option value="Hilang">Hilang</option>
                 </select>
+
+                <label for="catatan_pengembalian" class="fw-bold mt-3 d-block">Catatan Pengembalian (Opsional):</label>
+                <textarea id="catatan_pengembalian" rows="3" placeholder="Tulis catatan jika perlu..."   
+                    style="
+                        width:100%; 
+                        border-radius:8px; 
+                        border:1px solid #b0c9ff; 
+                        padding:8px 10px; 
+                        font-size:13px; 
+                        resize: vertical; 
+                        background: #f9fbff;
+                        margin-top:5px;
+                    "></textarea>
             </div>
         `,
         showCancelButton: true,
@@ -204,23 +246,37 @@ function confirmKembalikan(id, nama, barang, kondisi, jumlah, keterangan) {
         cancelButtonColor: '#d33',
         preConfirm: () => {
             return {
-                kondisi: document.getElementById('kondisi_pengembalian').value
+                kondisi: document.getElementById('kondisi_pengembalian').value,
+                catatan: document.getElementById('catatan_pengembalian').value.trim()
             };
         }
     }).then((result) => {
         if (result.isConfirmed) {
             const kondisi = result.value.kondisi || '';
-            let form = document.getElementById('form-kembalikan-' + id);
-            let inputKondisi = form.querySelector('input[name="kondisi_pengembalian"]');
+            const catatan = result.value.catatan || '';
 
+            let form = document.getElementById('form-kembalikan-' + id);
+
+            // Input kondisi
+            let inputKondisi = form.querySelector('input[name="kondisi_pengembalian"]');
             if (!inputKondisi) {
                 inputKondisi = document.createElement('input');
                 inputKondisi.type = 'hidden';
                 inputKondisi.name = 'kondisi_pengembalian';
                 form.appendChild(inputKondisi);
             }
-
             inputKondisi.value = kondisi;
+
+            // Input catatan (baru)
+            let inputCatatan = form.querySelector('input[name="catatan_pengembalian"]');
+            if (!inputCatatan) {
+                inputCatatan = document.createElement('input');
+                inputCatatan.type = 'hidden';
+                inputCatatan.name = 'catatan_pengembalian';
+                form.appendChild(inputCatatan);
+            }
+            inputCatatan.value = catatan;
+
             form.submit();
         }
     });

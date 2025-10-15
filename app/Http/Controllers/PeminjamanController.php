@@ -23,6 +23,7 @@ class PeminjamanController extends Controller implements HasMiddleware
     {
         $sortOrder = $request->get('sort', 'desc');
         $search = $request->get('search');
+        $status = $request->get('status'); // ambil filter status dari form
 
         $peminjamans = Peminjaman::with('barang')
             ->when($search, function ($q, $s) {
@@ -31,7 +32,23 @@ class PeminjamanController extends Controller implements HasMiddleware
                         ->orWhereHas('barang', fn($b) => $b->where('nama_barang', 'like', "%{$s}%"));
                 });
             })
-            ->orderBy('created_at', $sortOrder) // <-- ini pakai parameter sort
+            ->when($status, function ($q, $st) {
+                if ($st === 'Hilang') {
+                    // status hilang sebenernya dikembalikan tapi kondisi_pengembalian = Hilang
+                    $q->where('status', 'Dikembalikan')
+                    ->where('kondisi_pengembalian', 'Hilang');
+                } elseif ($st === 'Dikembalikan') {
+                    // tampilkan yg dikembalikan tapi bukan hilang
+                    $q->where('status', 'Dikembalikan')
+                    ->where(function ($sub) {
+                        $sub->whereNull('kondisi_pengembalian')
+                            ->orWhere('kondisi_pengembalian', '!=', 'Hilang');
+                    });
+                } else {
+                    $q->where('status', $st);
+                }
+            })
+            ->orderBy('created_at', $sortOrder)
             ->paginate(10)
             ->withQueryString();
 
@@ -53,7 +70,9 @@ class PeminjamanController extends Controller implements HasMiddleware
             'jumlah_pinjam' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|max:10048',
-            'kondisi_awal' => 'nullable|string|max:25'
+            'kondisi_awal' => 'nullable|string|max:25',
+            'no_hp' => 'nullable|string|max:20',
+            'kelas_divisi' => 'nullable|string|max:50',
         ]);
 
         $barang = Barang::find($validated['barang_id']);
@@ -68,6 +87,8 @@ class PeminjamanController extends Controller implements HasMiddleware
             'jumlah_pinjam' => $validated['jumlah_pinjam'],
             'keterangan' => $validated['keterangan'] ?? null,
             'kondisi_awal' => $validated['kondisi_awal'],
+            'no_hp' => $validated['no_hp'] ?? null,
+            'kelas_divisi' => $validated['kelas_divisi'] ?? null,
         ]);
 
         $barang->decrement('jumlah_barang', $validated['jumlah_pinjam']);
@@ -90,13 +111,15 @@ class PeminjamanController extends Controller implements HasMiddleware
     public function update(Request $request, Peminjaman $peminjaman)
     {
         $validated = $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
+            'barang_id' => 'required|integer|exists:barangs,id',
             'nama_peminjam' => 'required|string|max:150',
             'tanggal_pinjam' => 'required|date',
             'jumlah_pinjam' => 'required|integer|min:1',
             'keterangan' => 'nullable|string',
             'gambar' => 'nullable|image|max:10048',
-            'kondisi_awal' => 'nullable|string|max:25'
+            'kondisi_awal' => 'nullable|string|max:25',
+            'no_hp' => 'nullable|string|max:20',
+            'kelas_divisi' => 'nullable|string|max:50',
         ]);
 
         $oldStatus = $peminjaman->status;
@@ -132,6 +155,7 @@ class PeminjamanController extends Controller implements HasMiddleware
     // Validasi input
     $request->validate([
         'kondisi_pengembalian' => 'nullable|string|max:255',
+        'catatan_pengembalian' => 'nullable|string|max:500',
     ]);
 
     // Kalau kosong, ambil dari kondisi_awal
@@ -145,6 +169,7 @@ class PeminjamanController extends Controller implements HasMiddleware
         'status' => 'Dikembalikan',
         'tanggal_kembali' => now(),
         'kondisi_pengembalian' => $kondisi,
+        'catatan_pengembalian' => $request->catatan_pengembalian,
     ]);
 
     // Tambah stok kalau tidak hilang

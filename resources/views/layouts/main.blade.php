@@ -9,7 +9,7 @@
 
     <link rel="stylesheet" href="{{ asset('bootstrap/font/bootstrap-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('bootstrap/css/bootstrap.min.css') }}">
-    <link rel="icon" type="image/png" href="{{ asset('images/ikon.png?v=2') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/ikon.png?v=3') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -39,6 +39,10 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <x-modal-delete />
     <script src="{{ asset('bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        lucide.createIcons();
+    </script>
     <script>
         const deleteModal = document.getElementById('deleteModal');
         deleteModal.addEventListener('show.bs.modal', event => {

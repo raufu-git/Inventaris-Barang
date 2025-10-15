@@ -8,6 +8,7 @@
             <th>Lokasi</th>
             <th>Jumlah</th>
             <th>Kondisi</th>
+            <th>Sumber Dana</th>
             <th>&nbsp;</th>
         </tr>
     </x-slot>
@@ -31,6 +32,7 @@
                     <span class="badge bg-secondary">{{ $barang->kondisi }}</span>
                 @endif
             </td>
+            <td>{{ $barang->sumber_dana }}</td>
             <td class="text-end">
                 @can('manage barang')
                     <x-tombol-aksi href="{{ route('barang.show', $barang->id) }}" type="show" />
