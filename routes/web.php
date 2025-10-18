@@ -36,8 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('units', UnitController::class)->only(['edit', 'update']);
     Route::put('/barang/{barang}/update-frekuensi-kondisi', [BarangController::class, 'updateFrekuensiKondisi'])
     ->name('barang.updateFrekuensiKondisi');
-    Route::get('/barang/{barang}/units', [BarangController::class, 'units'])->name('barang.units');
-
+Route::get('/barang/{barang}/units-json', [BarangController::class, 'unitsJson'])->name('barang.unitsJson');
 });
 
 require __DIR__.'/auth.php';

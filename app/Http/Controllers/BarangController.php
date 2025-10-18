@@ -348,12 +348,9 @@ public function index(Request $request)
         return response()->json(['success' => true]); // cocok buat AJAX
     }
 
-    // Di BarangController.php
-    public function units(Barang $barang)
+    public function unitsJson(Barang $barang)
     {
-        // Pastikan kamu punya Blade partial: resources/views/barang/partials/units_table.blade.php
-        return view('barang.partials.unit_table', compact('barang'));
+        return response()->json($barang->units()->orderBy('id')->get());
     }
-
-
+    
 }

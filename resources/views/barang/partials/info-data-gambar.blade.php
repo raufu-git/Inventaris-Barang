@@ -196,28 +196,23 @@
 </div>
 
 <script>
-function loadUnitBarang(barangId) {
-    $.get('/barang/' + barangId + '/units', function(data) {
-        $('#unitTableBody-' + barangId).html(data);
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
 
-// Search unit
-document.querySelectorAll('.searchUnitInput').forEach(input => {
-    input.addEventListener('input', function() {
-        const keyword = this.value.toLowerCase();
-        const barangId = this.dataset.barang;
-        const rows = document.querySelectorAll(`#unitTableBody-${barangId} tr`);
-        rows.forEach(row => {
-            const kodeUnit = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-            const belakang = kodeUnit.split('-').pop();
-            row.style.display = belakang.includes(keyword) || keyword === '' ? '' : 'none';
+    // Search unit
+    document.querySelectorAll('.searchUnitInput').forEach(input => {
+        input.addEventListener('input', function() {
+            const keyword = this.value.toLowerCase();
+            const barangId = this.dataset.barang;
+            const rows = document.querySelectorAll(`#unitTableBody-${barangId} tr`);
+            rows.forEach(row => {
+                const kodeUnit = row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                const belakang = kodeUnit.split('-').pop();
+                row.style.display = belakang.includes(keyword) || keyword === '' ? '' : 'none';
+            });
         });
     });
-});
 
-// AJAX edit form
-document.addEventListener('DOMContentLoaded', function() {
+    // AJAX edit form
     const form = document.getElementById('editForm-{{ $barang->id }}');
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -227,10 +222,9 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             data: $(form).serialize(),
             success: function(res) {
-                // tutup modal edit
+                // Tutup modal edit
                 $('#editBarangModal-{{ $barang->id }}').modal('hide');
-                // reload tabel unit
-                location.reload();
+                // tabel unit akan di-reload saat modal edit benar-benar tertutup
             },
             error: function(err) {
                 console.log(err);
@@ -238,12 +232,54 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Ketika modal edit ditutup, show unit modal
-    const modalEdit = document.getElementById('editBarangModal-{{ $barang->id }}');
-    modalEdit.addEventListener('hidden.bs.modal', function () {
-        const unitModal = new bootstrap.Modal(document.getElementById('unitModal-{{ $barang->id }}'));
+    // Setelah modal edit benar-benar tertutup
+    $('#editBarangModal-{{ $barang->id }}').on('hidden.bs.modal', function () {
+        // hapus backdrop lama
+        $('.modal-backdrop').remove();
+        $('body').removeClass('modal-open');
+
+        // Buka modal unit
+        const unitModalEl = document.getElementById('unitModal-{{ $barang->id }}');
+        const unitModal = new bootstrap.Modal(unitModalEl);
         unitModal.show();
-        loadUnitBarang({{ $barang->id }});
+
+        // Reload tabel unit via AJAX JSON
+        $.get('/barang/{{ $barang->id }}/units-json', function(units) {
+            let tbody = $('#unitTableBody-{{ $barang->id }}');
+            tbody.empty();
+
+            if(units.length === 0){
+                tbody.append('<tr><td colspan="6" class="text-center text-muted">Belum ada unit untuk barang ini.</td></tr>');
+            } else {
+                units.forEach((unit, i) => {
+                    let badgeClass = 'bg-success';
+                    if(unit.kondisi === 'Rusak Ringan') badgeClass = 'bg-warning text-dark';
+                    else if(unit.kondisi === 'Rusak Berat') badgeClass = 'bg-danger';
+
+                    let nextText = unit.tanggal_perawatan_selanjutnya
+                        ? new Date(unit.tanggal_perawatan_selanjutnya)
+                            .toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})
+                        : '-';
+
+                    tbody.append(`
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${unit.kode_unit}</td>
+                            <td><span class="badge ${badgeClass}">${unit.kondisi}</span></td>
+                            <td>${unit.frekuensi_perawatan || '{{ $barang->frekuensi_perawatan ?? "-" }}'}</td>
+                            <td>${nextText}</td>
+                            <td>
+                                <form action="/barang/konfirmasi/${unit.id}" method="POST">
+                                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-secondary btn-sm" disabled>Menunggu</button>
+                                </form>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+        });
     });
+
 });
 </script>
