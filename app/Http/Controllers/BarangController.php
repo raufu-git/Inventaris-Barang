@@ -69,28 +69,59 @@ public function index(Request $request)
             'nama_barang' => 'required|string|max:150',
             'kategori_id' => 'required|exists:kategoris,id',
             'lokasi_id' => 'required|exists:lokasis,id',
-            'jumlah_barang' => 'required|integer|min:0',
+            'jumlah_barang' => 'required|integer|min:1',
             'satuan' => 'required|string|max:20',
-            'sumber_dana' => 'nullable|string|max:100',
+            'sumber_dana' => 'required|string|max:100',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
-            'gambar' => 'nullable|image|max:10048', 
+            'gambar' => 'nullable|image|max:10048',
             'frekuensi_perawatan' => 'nullable|string',
             'custom_frekuensi' => 'nullable|string',
             'tanggal_perawatan_selanjutnya' => 'nullable|date',
         ]);
 
+        // Simpan gambar kalau ada
         if ($request->hasFile('gambar')) {
             $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
         }
+
+        // Ubah frekuensi kalau pakai custom
         if ($validated['frekuensi_perawatan'] === 'lainnya' && !empty($validated['custom_frekuensi'])) {
             $validated['frekuensi_perawatan'] = $validated['custom_frekuensi'];
         }
 
-        unset($validated['custom_frekuensi']); 
-        Barang::create($validated);
+        unset($validated['custom_frekuensi']);
 
-        return redirect()->route('barang.index')->with('success', 'Data barang berhasil ditambahkan.');
+        // Buat barang utama dulu
+        $barang = Barang::create([
+            'kode_barang' => $validated['kode_barang'],
+            'nama_barang' => $validated['nama_barang'],
+            'kategori_id' => $validated['kategori_id'],
+            'lokasi_id' => $validated['lokasi_id'],
+            'jumlah_barang' => $validated['jumlah_barang'],
+            'satuan' => $validated['satuan'],
+            'sumber_dana' => $validated['sumber_dana'],
+            'kondisi' => $validated['kondisi'],
+            'tanggal_pengadaan' => $validated['tanggal_pengadaan'],
+            'gambar' => $validated['gambar'] ?? null,
+            'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? null,
+            'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'] ?? null,
+            'butuh_perawatan' => $request->has('frekuensi_perawatan') ? 1 : 0,
+        ]);
+
+        // 🔁 Buat unit-unit otomatis
+        for ($i = 1; $i <= $barang->jumlah_barang; $i++) {
+            $kodeUnit = "{$barang->kode_barang}-{$i}";
+
+            \App\Models\Unit::create([
+                'barang_id' => $barang->id,
+                'kode_unit' => $kodeUnit,
+                'kondisi' => 'Baik',
+            ]);
+        }
+
+        return redirect()->route('barang.index')
+            ->with('success', "Barang dengan kode {$barang->kode_barang} berhasil ditambahkan beserta {$barang->jumlah_barang} unit-nya!");
     }
 
     /**
@@ -118,37 +149,74 @@ public function index(Request $request)
     public function update(Request $request, Barang $barang)
     {
         $validated = $request->validate([
-            'kode_barang' => 'required|string|max:50|unique:barangs,kode_barang,' . $barang->id,
             'nama_barang' => 'required|string|max:150',
             'kategori_id' => 'required|exists:kategoris,id',
             'lokasi_id' => 'required|exists:lokasis,id',
-            'jumlah_barang' => 'required|integer|min:0',
+            'jumlah_barang' => 'required|integer|min:1',
             'satuan' => 'required|string|max:20',
-            'sumber_dana' => 'nullable|string|max:100',
+            'sumber_dana' => 'required|string|max:100',
             'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,gif  |max:10048',
+            'gambar' => 'nullable|image|max:10048',
             'frekuensi_perawatan' => 'nullable|string',
             'custom_frekuensi' => 'nullable|string',
             'tanggal_perawatan_selanjutnya' => 'nullable|date',
         ]);
 
-        if ($request->hasFile('gambar')) {
-            // Hapus gambar lama jika ada
-            if ($barang->gambar) {
-                Storage::disk('gambar-barang')->delete($barang->gambar);
-            }
-            $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
-        }
-
+        // Frekuensi custom
         if ($validated['frekuensi_perawatan'] === 'lainnya' && !empty($validated['custom_frekuensi'])) {
             $validated['frekuensi_perawatan'] = $validated['custom_frekuensi'];
         }
+        unset($validated['custom_frekuensi']);
 
-        unset($validated['custom_frekuensi']); 
-        $barang->update($validated);
+        // Upload gambar baru jika ada
+        if ($request->hasFile('gambar')) {
+            $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
+        }
 
-        return redirect()->route('barang.index')->with('success', 'Data barang berhasil diperbarui.');
+        // Simpan perubahan di tabel barangs
+        $barang->update([
+            'nama_barang' => $validated['nama_barang'],
+            'kategori_id' => $validated['kategori_id'],
+            'lokasi_id' => $validated['lokasi_id'],
+            'jumlah_barang' => $validated['jumlah_barang'],
+            'satuan' => $validated['satuan'],
+            'sumber_dana' => $validated['sumber_dana'],
+            'kondisi' => $validated['kondisi'],
+            'tanggal_pengadaan' => $validated['tanggal_pengadaan'],
+            'gambar' => $validated['gambar'] ?? $barang->gambar,
+            'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? null,
+            'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'] ?? null,
+            'butuh_perawatan' => $request->has('frekuensi_perawatan') ? 1 : 0,
+        ]);
+
+        // 🧮 Update units
+        $currentCount = $barang->units()->count();
+        $newCount = (int) $validated['jumlah_barang'];
+
+        // CASE 1: Jumlah naik → tambah unit baru
+        if ($newCount > $currentCount) {
+            for ($i = $currentCount + 1; $i <= $newCount; $i++) {
+                \App\Models\Unit::create([
+                    'barang_id' => $barang->id,
+                    'kode_unit' => "{$barang->kode_barang}-{$i}",
+                    'kondisi' => 'Baik',
+                ]);
+            }
+        }
+
+        // CASE 2: Jumlah turun → hapus unit terakhir
+        elseif ($newCount < $currentCount) {
+            $difference = $currentCount - $newCount;
+            $unitsToDelete = $barang->units()->latest('id')->take($difference)->get();
+
+            foreach ($unitsToDelete as $unit) {
+                $unit->delete();
+            }
+        }
+
+        return redirect()->route('barang.index')
+            ->with('success', "Data barang {$barang->kode_barang} berhasil diperbarui! ($currentCount → $newCount unit)");
     }
 
     /**
@@ -232,4 +300,60 @@ public function index(Request $request)
 
         return redirect()->back()->with('success', '✅ Jadwal perawatan berhasil diperbarui!');
     }
+
+    public function updateFrekuensiKondisi(Request $request, $id)
+    {
+        $barang = Barang::findOrFail($id);
+
+        // Update frekuensi default barang (opsional)
+        if ($request->filled('frekuensi_perawatan')) {
+            $barang->frekuensi_perawatan = $request->frekuensi_perawatan;
+            $barang->save();
+        }
+
+        // Update kondisi atau frekuensi unit tertentu
+        if ($request->filled('unit_nomor')) {
+            $nomorUnits = explode(',', $request->unit_nomor);
+            foreach ($nomorUnits as $nomor) {
+                $nomor = trim($nomor);
+                $unit = $barang->units()->where('kode_unit', 'like', "%-$nomor")->first();
+                if ($unit) {
+                    // Update kondisi unit jika ada
+                    if ($request->filled('kondisi')) {
+                        $unit->kondisi = $request->kondisi;
+                    }
+
+                    // Update frekuensi unit agar override default barang
+                    if ($request->filled('frekuensi_perawatan')) {
+                        $unit->frekuensi_perawatan = $request->frekuensi_perawatan;
+                    }
+
+                    $unit->save();
+                }
+            }
+        }
+
+        // Hapus unit tertentu
+        if ($request->filled('hapus_nomor')) {
+            $hapusUnits = explode(',', $request->hapus_nomor);
+            foreach ($hapusUnits as $nomor) {
+                $nomor = trim($nomor);
+                $unit = $barang->units()->where('kode_unit', 'like', "%-$nomor")->first();
+                if ($unit) {
+                    $unit->delete();
+                }
+            }
+        }
+
+        return response()->json(['success' => true]); // cocok buat AJAX
+    }
+
+    // Di BarangController.php
+    public function units(Barang $barang)
+    {
+        // Pastikan kamu punya Blade partial: resources/views/barang/partials/units_table.blade.php
+        return view('barang.partials.unit_table', compact('barang'));
+    }
+
+
 }

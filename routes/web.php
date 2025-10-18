@@ -8,6 +8,7 @@ use App\Http\Controllers\LokasiController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PeminjamanController;
+use App\Http\Controllers\UnitController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,6 +33,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('barang', BarangController::class);
     Route::post('/barang/{id}/konfirmasi-perawatan', [BarangController::class, 'konfirmasiPerawatan'])
     ->name('barang.konfirmasiPerawatan');
+    Route::resource('units', UnitController::class)->only(['edit', 'update']);
+    Route::put('/barang/{barang}/update-frekuensi-kondisi', [BarangController::class, 'updateFrekuensiKondisi'])
+    ->name('barang.updateFrekuensiKondisi');
+    Route::get('/barang/{barang}/units', [BarangController::class, 'units'])->name('barang.units');
 
 });
 

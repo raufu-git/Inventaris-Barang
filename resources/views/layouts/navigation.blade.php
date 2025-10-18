@@ -47,7 +47,6 @@
             </ul>
 
             <!-- Right Side -->
-            <!-- Right Side -->
         <ul class="navbar-nav ms-auto">
             <x-dropdown>
                 <x-slot name="trigger">
@@ -77,49 +76,109 @@
 </nav>
 
 <style>
-    /* Navbar custom theme - Olive & Sand Brown */
+/* ===== NAVBAR CUSTOM THEME ===== */
 .custom-navbar {
-    background-color: #708238 !important; /* Olive green */
-    color: #f5f5dc !important; /* Light sand */
+    background-color: #2f4f4f !important; /* Slate Gray */
+    color: #a8e6cf !important; /* Mint */
+    position: relative;
 }
 
 .custom-navbar .navbar-brand {
-    color: #f5f5dc !important;
+    color: #a8e6cf !important;
     font-weight: 600;
     letter-spacing: 0.3px;
 }
 
+/* ===== NAV LINK (normal menu) ===== */
 .custom-navbar .navbar-nav .nav-link {
-    color: #f5f5dc !important;
+    color: #a8e6cf !important;
     font-weight: 500;
     margin-right: 10px;
-    transition: all 0.2s ease;
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.25s ease;
+}
+
+/* Underline animasi untuk nav biasa */
+.custom-navbar .navbar-nav .nav-link:not(.dropdown-toggle)::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0%;
+    background-color: #a8e6cf;
+    transition: width 0.3s ease;
+}
+
+/* Efek hover dan active untuk nav biasa */
+.custom-navbar .navbar-nav .nav-link:not(.dropdown-toggle):hover::after,
+.custom-navbar .navbar-nav .nav-link:not(.dropdown-toggle).active::after {
+    width: 100%;
 }
 
 .custom-navbar .navbar-nav .nav-link:hover {
-    color: #d2b48c !important; /* Sand brown hover */
+    color: #d0f0e0 !important;
 }
 
 .custom-navbar .navbar-nav .nav-link.active {
-    color: #fffbe0 !important;
-    border-bottom: 2px solid #d2b48c;
+    color: #ffffff !important;
 }
 
-/* User dropdown */
+/* ===== DROPDOWN (USER) ===== */
 .custom-navbar .dropdown-toggle {
-    color: #f5f5dc !important;
+    color: #a8e6cf !important;
     font-weight: 500;
+    position: relative;
+    border: none;
+    background: transparent;
+    padding-bottom: 4px;
 }
 
+/* Hapus ikon caret bawaan Bootstrap */
+.custom-navbar .dropdown-toggle::after {
+    display: none !important;
+}
+
+/* Underline langsung muncul saat aktif (tanpa animasi) */
+.custom-navbar .dropdown-toggle.active::before,
+.custom-navbar .dropdown-toggle.show::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background-color: #ffffff; /* putih */
+}
+
+/* Hover tanpa animasi */
+.custom-navbar .dropdown-toggle:hover,
+.custom-navbar .dropdown-toggle:focus {
+    color: #ffffff !important;
+}
+
+/* Dropdown menu styling */
 .custom-navbar .dropdown-menu {
-    background-color: #f5f5dc;
+    background-color: #a8e6cf;
     border: none;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
 .custom-navbar .dropdown-item:hover {
-    background-color: #d2b48c;
-    color: #fff;
+    background-color: #2f4f4f;
+    color: #ffffff;
+}
+/* Dropdown menu styling */
+.custom-navbar .dropdown-menu {
+    background-color: #a8e6cf; /* Mint */
+    border: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.custom-navbar .dropdown-item:hover {
+    background-color: #2f4f4f; /* Slate Gray hover */
+    color: #ffffff;
 }
 
 </style>

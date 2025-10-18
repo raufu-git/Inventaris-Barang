@@ -6,6 +6,7 @@
             <th>Nama Barang</th>
             <th>Jumlah</th>
             <th>Tanggal Pinjam</th>
+            <th>Tanggal Kembali</th>
             <th>Status</th>
             <th>&nbsp;</th>
         </tr>
@@ -18,6 +19,7 @@
             <td>{{ $peminjaman->barang->nama_barang }}</td>
             <td>{{ $peminjaman->jumlah_pinjam }} {{ $peminjaman->barang->satuan }}</td>
             <td>{{ $peminjaman->tanggal_pinjam }}</td>
+            <td>{{ $peminjaman->tanggal_kembali ?? '-' }}</td>
             <td>
                 @if ($peminjaman->status == 'Dipinjam')
                     <span class="badge bg-warning text-dark">{{ $peminjaman->status }}</span>

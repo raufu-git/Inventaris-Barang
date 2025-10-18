@@ -22,4 +22,9 @@ class Barang extends Model
     {
         return $this->belongsTo(Lokasi::class, 'lokasi_id');
     }
+    public function units()
+    {
+        return $this->hasMany(\App\Models\Unit::class, 'barang_id');
+    }
+
 }

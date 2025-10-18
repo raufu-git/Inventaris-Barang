@@ -191,13 +191,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function hitungTanggalPerawatan() {
         const tanggalPengadaan = parseDate(tanggalPengadaanInput.value);
-        if (!tanggalPengadaan) {
+        const tanggalPerawatanTersimpan = parseDate(tanggalPerawatanInput.value);
+        const frekuensi = select.value;
+
+        // ✅ Kalau tanggal perawatan tersimpan sudah ada, jangan hitung ulang
+        //    kecuali user mengganti frekuensi atau tanggal pengadaan secara manual
+        if (tanggalPerawatanTersimpan && 
+            (!tanggalPengadaanInput.dataset.changed && !select.dataset.changed && !customInput.dataset.changed)) {
+            tampilkanBadge(tanggalPerawatanTersimpan);
+            return;
+        }
+
+        if (!tanggalPengadaan || !frekuensi) {
             tanggalPerawatanInput.value = '';
             statusDiv.innerHTML = '';
             return;
         }
 
-        const frekuensi = select.value;
         let nextDate = new Date(tanggalPengadaan);
 
         if (frekuensi === '1 bulan sekali') tambahWaktu(nextDate, 1, 'bulan');
@@ -245,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (selisihHari > 0) {
             if (selisihHari >= 30) {
-                keterangan = `${selisihBulan} bulan (${selisihHari} hari)`;
+                keterangan = `${selisihBulan} bulan`;
             } else {
                 keterangan = `${selisihHari} hari`;
             }
@@ -259,7 +269,7 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             const bulanTerlambat = Math.floor(Math.abs(selisihHari) / 30);
             if (Math.abs(selisihHari) >= 30) {
-                keterangan = `${bulanTerlambat} bulan (${Math.abs(selisihHari)} hari)`;
+                keterangan = `${bulanTerlambat} bulan`;
             } else {
                 keterangan = `${Math.abs(selisihHari)} hari`;
             }
