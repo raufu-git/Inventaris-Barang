@@ -33,30 +33,7 @@
 
 <div class="row mb-3">
     <div class="col-md-6">
-        <x-form-input label="Jumlah" name="jumlah_barang" :value="$barang->jumlah_barang" type="number" />
-    </div>
-    <div class="col-md-6">
         <x-form-input label="Satuan" name="satuan" :value="$barang->satuan" />
-    </div>
-</div>
-
-<div class="row mb-3">
-    <div class="col-md-6">
-        @php
-            $kondisi = [
-                ['kondisi' => 'Baik'],
-                ['kondisi' => 'Rusak Ringan'],
-                ['kondisi' => 'Rusak Berat'],
-            ];
-        @endphp
-        <x-form-select 
-            label="Kondisi" 
-            name="kondisi" 
-            :value="$barang->kondisi" 
-            :option-data="$kondisi"
-            option-label="kondisi" 
-            option-value="kondisi" 
-        />
     </div>
     <div class="col-md-6">
         @php
@@ -70,6 +47,37 @@
             type="date" 
             id="tanggal_pengadaan"
             :value="$tanggal" 
+            max="{{ date('Y-m-d') }}"
+        />
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <x-form-input 
+            label="Jumlah Kondisi Baik" 
+            name="jumlah_baik" 
+            type="number" 
+            min="0" 
+            :value="old('jumlah_baik', $jumlahBaik ?? 0)" 
+        />
+    </div>
+    <div class="col-md-4">
+        <x-form-input 
+            label="Jumlah Rusak Ringan" 
+            name="jumlah_rusak_ringan" 
+            type="number" 
+            min="0" 
+            :value="old('jumlah_rusak_ringan', $jumlahRusakRingan ?? 0)" 
+        />
+    </div>
+    <div class="col-md-4">
+        <x-form-input 
+            label="Jumlah Rusak Berat" 
+            name="jumlah_rusak_berat" 
+            type="number" 
+            min="0" 
+            :value="old('jumlah_rusak_berat', $jumlahRusakBerat ?? 0)" 
         />
     </div>
 </div>
@@ -98,22 +106,21 @@
             id="frekuensi_perawatan"
         />
     </div>
-
-<div class="col-md-6">
-    <x-form-input 
-        label="Tanggal Perawatan Selanjutnya" 
-        name="tanggal_perawatan_selanjutnya" 
-        type="date" 
-        :value="old('tanggal_perawatan_selanjutnya', $barang->tanggal_perawatan_selanjutnya)" 
-        readonly
-        id="tanggal_perawatan_selanjutnya"
-    />
-    <div id="status-perawatan" class="mt-2"></div>
+    <div class="col-md-6">
+        <x-form-input 
+            label="Tanggal Perawatan Selanjutnya" 
+            name="tanggal_perawatan_selanjutnya" 
+            type="date" 
+            :value="old('tanggal_perawatan_selanjutnya', $barang->tanggal_perawatan_selanjutnya)" 
+            readonly
+            id="tanggal_perawatan_selanjutnya"
+        />
+        <div id="status-perawatan" class="mt-2"></div>
+    </div>
 </div>
-</div>
 
-<div class="row mb-3">
-    <div class="col-md-6" id="custom-frekuensi-container" style="display: none;">
+<div class="row mb-3" id="custom-frekuensi-container" style="display: none;">
+    <div class="col-md-6">
         <x-form-input 
             label="Tulis Frekuensi Sendiri (misal: setiap 10 hari, 2 minggu, dst)" 
             name="custom_frekuensi"
@@ -124,15 +131,16 @@
     </div>
 </div>
 
+@php
+    $sumberDana = [
+        ['value' => 'Pemerintah', 'label' => 'Pemerintah'],
+        ['value' => 'Swadaya', 'label' => 'Swadaya'],
+        ['value' => 'Donatur', 'label' => 'Donatur'],
+    ];
+@endphp
+
 <div class="row mb-3">
     <div class="col-md-6">
-        @php
-            $sumberDana = [
-                ['value' => 'Pemerintah', 'label' => 'Pemerintah'],
-                ['value' => 'Swadaya', 'label' => 'Swadaya'],
-                ['value' => 'Donatur', 'label' => 'Donatur'],
-            ];
-        @endphp
         <x-form-select 
             label="Sumber Dana" 
             name="sumber_dana" 
@@ -142,7 +150,6 @@
             option-value="value" 
         />
     </div>
-
     <div class="col-md-6">
         <x-form-input label="Gambar Barang" name="gambar" type="file" />
     </div>
@@ -156,6 +163,31 @@
 </div>
 
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const jumlah = document.querySelector('input[name="jumlah_barang"]');
+  const cBaik  = document.querySelector('input[name="count_baik"]');
+  const cRing  = document.querySelector('input[name="count_ringan"]');
+  const cBerat = document.querySelector('input[name="count_berat"]');
+  const warnId = document.getElementById('distWarning-new') || document.getElementById('distWarning-{{ $barang->id ?? 'new' }}');
+  const submitBtn = document.querySelector('button[type="submit"]');
+
+  function checkSum() {
+    const total = (Number(cBaik?.value || 0) + Number(cRing?.value || 0) + Number(cBerat?.value || 0));
+    if (jumlah && jumlah.value && total !== 0 && Number(jumlah.value) !== total) {
+      warnId.style.display = 'block';
+      submitBtn.disabled = true;
+    } else {
+      warnId.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+  }
+
+  [jumlah, cBaik, cRing, cBerat].forEach(e => e && e.addEventListener('input', checkSum));
+  checkSum();
+});
+</script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
     const select = document.getElementById('frekuensi_perawatan');

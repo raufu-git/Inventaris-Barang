@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Barang;
 use App\Models\Kategori;
 use App\Models\Lokasi;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
@@ -55,8 +56,12 @@ public function index(Request $request)
         $kategori = Kategori::all();
         $lokasi = Lokasi::all();
 
+        $jumlahBaik = 0;
+        $jumlahRusakRingan = 0;
+        $jumlahRusakBerat = 0;
+
         $barang = new Barang();
-        return view('barang.create', compact('barang', 'kategori', 'lokasi'));
+        return view('barang.create', compact('barang', 'kategori', 'lokasi', 'jumlahBaik', 'jumlahRusakRingan', 'jumlahRusakBerat'));
     }
 
     /**
@@ -69,15 +74,16 @@ public function index(Request $request)
             'nama_barang' => 'required|string|max:150',
             'kategori_id' => 'required|exists:kategoris,id',
             'lokasi_id' => 'required|exists:lokasis,id',
-            'jumlah_barang' => 'required|integer|min:1',
             'satuan' => 'required|string|max:20',
             'sumber_dana' => 'required|string|max:100',
-            'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
             'gambar' => 'nullable|image|max:10048',
             'frekuensi_perawatan' => 'nullable|string',
             'custom_frekuensi' => 'nullable|string',
             'tanggal_perawatan_selanjutnya' => 'nullable|date',
+            'jumlah_baik' => 'nullable|integer|min:0',
+            'jumlah_rusak_ringan' => 'nullable|integer|min:0',
+            'jumlah_rusak_berat' => 'nullable|integer|min:0',
         ]);
 
         // Simpan gambar kalau ada
@@ -85,43 +91,62 @@ public function index(Request $request)
             $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
         }
 
-        // Ubah frekuensi kalau pakai custom
+        // Frekuensi custom
         if ($validated['frekuensi_perawatan'] === 'lainnya' && !empty($validated['custom_frekuensi'])) {
             $validated['frekuensi_perawatan'] = $validated['custom_frekuensi'];
         }
-
         unset($validated['custom_frekuensi']);
 
-        // Buat barang utama dulu
+        // Hitung total dari kondisi
+        $totalJumlah = ($request->jumlah_baik ?? 0)
+            + ($request->jumlah_rusak_ringan ?? 0)
+            + ($request->jumlah_rusak_berat ?? 0);
+
+        if ($totalJumlah <= 0) {
+            return back()->with('error', 'Jumlah barang tidak boleh kosong!');
+        }
+
+        // Simpan barang utama
         $barang = Barang::create([
             'kode_barang' => $validated['kode_barang'],
             'nama_barang' => $validated['nama_barang'],
             'kategori_id' => $validated['kategori_id'],
             'lokasi_id' => $validated['lokasi_id'],
-            'jumlah_barang' => $validated['jumlah_barang'],
+            'jumlah_barang' => $totalJumlah,
             'satuan' => $validated['satuan'],
             'sumber_dana' => $validated['sumber_dana'],
-            'kondisi' => $validated['kondisi'],
             'tanggal_pengadaan' => $validated['tanggal_pengadaan'],
             'gambar' => $validated['gambar'] ?? null,
             'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? null,
             'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'] ?? null,
-            'butuh_perawatan' => $request->has('frekuensi_perawatan') ? 1 : 0,
+            'butuh_perawatan' => $request->filled('frekuensi_perawatan'),
         ]);
 
-        // 🔁 Buat unit-unit otomatis
-        for ($i = 1; $i <= $barang->jumlah_barang; $i++) {
-            $kodeUnit = "{$barang->kode_barang}-{$i}";
+        // 🔁 Generate units
+        $baik = (int) $request->jumlah_baik;
+        $ringan = (int) $request->jumlah_rusak_ringan;
+        $berat = (int) $request->jumlah_rusak_berat;
 
-            \App\Models\Unit::create([
+        $kondisiList = array_merge(
+            array_fill(0, $baik, 'Baik'),
+            array_fill(0, $ringan, 'Rusak Ringan'),
+            array_fill(0, $berat, 'Rusak Berat')
+        );
+
+        shuffle($kondisiList);
+
+        foreach ($kondisiList as $i => $kondisi) {
+            Unit::create([
                 'barang_id' => $barang->id,
-                'kode_unit' => $kodeUnit,
-                'kondisi' => 'Baik',
+                'kode_unit' => "{$barang->kode_barang}-" . ($i + 1),
+                'kondisi' => $kondisi,
+                'frekuensi_perawatan' => $barang->frekuensi_perawatan,
+                'tanggal_perawatan_selanjutnya' => $barang->tanggal_perawatan_selanjutnya,
             ]);
         }
 
         return redirect()->route('barang.index')
-            ->with('success', "Barang dengan kode {$barang->kode_barang} berhasil ditambahkan beserta {$barang->jumlah_barang} unit-nya!");
+            ->with('success', "Barang {$barang->kode_barang} berhasil disimpan dengan {$totalJumlah} unit.");
     }
 
     /**
@@ -140,7 +165,13 @@ public function index(Request $request)
     {
         $kategori = Kategori::all();
         $lokasi = Lokasi::all();
-        return view('barang.edit', compact('barang', 'kategori', 'lokasi'));
+
+        // Hitung jumlah kondisi dari tabel units
+        $jumlahBaik = $barang->units()->where('kondisi', 'Baik')->count();
+        $jumlahRusakRingan = $barang->units()->where('kondisi', 'Rusak Ringan')->count();
+        $jumlahRusakBerat = $barang->units()->where('kondisi', 'Rusak Berat')->count();
+
+        return view('barang.edit', compact('barang', 'kategori', 'lokasi', 'jumlahBaik', 'jumlahRusakRingan', 'jumlahRusakBerat'));
     }
 
     /**
@@ -152,15 +183,16 @@ public function index(Request $request)
             'nama_barang' => 'required|string|max:150',
             'kategori_id' => 'required|exists:kategoris,id',
             'lokasi_id' => 'required|exists:lokasis,id',
-            'jumlah_barang' => 'required|integer|min:1',
             'satuan' => 'required|string|max:20',
             'sumber_dana' => 'required|string|max:100',
-            'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
             'tanggal_pengadaan' => 'required|date',
             'gambar' => 'nullable|image|max:10048',
             'frekuensi_perawatan' => 'nullable|string',
             'custom_frekuensi' => 'nullable|string',
             'tanggal_perawatan_selanjutnya' => 'nullable|date',
+            'jumlah_baik' => 'nullable|integer|min:0',
+            'jumlah_rusak_ringan' => 'nullable|integer|min:0',
+            'jumlah_rusak_berat' => 'nullable|integer|min:0',
         ]);
 
         // Frekuensi custom
@@ -169,9 +201,18 @@ public function index(Request $request)
         }
         unset($validated['custom_frekuensi']);
 
-        // Upload gambar baru jika ada
+        // Upload gambar baru kalau ada
         if ($request->hasFile('gambar')) {
             $validated['gambar'] = $request->file('gambar')->store(null, 'gambar-barang');
+        }
+
+        // Hitung total dari kondisi
+        $totalJumlah = ($request->jumlah_baik ?? 0)
+            + ($request->jumlah_rusak_ringan ?? 0)
+            + ($request->jumlah_rusak_berat ?? 0);
+
+        if ($totalJumlah <= 0) {
+            return back()->with('error', 'Jumlah barang tidak boleh kosong!');
         }
 
         // Simpan perubahan di tabel barangs
@@ -179,44 +220,43 @@ public function index(Request $request)
             'nama_barang' => $validated['nama_barang'],
             'kategori_id' => $validated['kategori_id'],
             'lokasi_id' => $validated['lokasi_id'],
-            'jumlah_barang' => $validated['jumlah_barang'],
+            'jumlah_barang' => $totalJumlah,
             'satuan' => $validated['satuan'],
             'sumber_dana' => $validated['sumber_dana'],
-            'kondisi' => $validated['kondisi'],
             'tanggal_pengadaan' => $validated['tanggal_pengadaan'],
             'gambar' => $validated['gambar'] ?? $barang->gambar,
             'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? null,
             'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'] ?? null,
-            'butuh_perawatan' => $request->has('frekuensi_perawatan') ? 1 : 0,
+            'butuh_perawatan' => $request->filled('frekuensi_perawatan'),
         ]);
 
-        // 🧮 Update units
-        $currentCount = $barang->units()->count();
-        $newCount = (int) $validated['jumlah_barang'];
+        // 🔁 Hapus semua unit lama dan regenerasi (biar kondisi update sesuai input baru)
+        $barang->units()->delete();
 
-        // CASE 1: Jumlah naik → tambah unit baru
-        if ($newCount > $currentCount) {
-            for ($i = $currentCount + 1; $i <= $newCount; $i++) {
-                \App\Models\Unit::create([
-                    'barang_id' => $barang->id,
-                    'kode_unit' => "{$barang->kode_barang}-{$i}",
-                    'kondisi' => 'Baik',
-                ]);
-            }
-        }
+        $baik = (int) $request->jumlah_baik;
+        $ringan = (int) $request->jumlah_rusak_ringan;
+        $berat = (int) $request->jumlah_rusak_berat;
 
-        // CASE 2: Jumlah turun → hapus unit terakhir
-        elseif ($newCount < $currentCount) {
-            $difference = $currentCount - $newCount;
-            $unitsToDelete = $barang->units()->latest('id')->take($difference)->get();
+        $kondisiList = array_merge(
+            array_fill(0, $baik, 'Baik'),
+            array_fill(0, $ringan, 'Rusak Ringan'),
+            array_fill(0, $berat, 'Rusak Berat')
+        );
 
-            foreach ($unitsToDelete as $unit) {
-                $unit->delete();
-            }
+        shuffle($kondisiList);
+
+        foreach ($kondisiList as $i => $kondisi) {
+            Unit::create([
+                'barang_id' => $barang->id,
+                'kode_unit' => "{$barang->kode_barang}-" . ($i + 1),
+                'kondisi' => $kondisi,
+                'frekuensi_perawatan' => $barang->frekuensi_perawatan,
+                'tanggal_perawatan_selanjutnya' => $barang->tanggal_perawatan_selanjutnya,
+            ]);
         }
 
         return redirect()->route('barang.index')
-            ->with('success', "Data barang {$barang->kode_barang} berhasil diperbarui! ($currentCount → $newCount unit)");
+            ->with('success', "Barang {$barang->kode_barang} berhasil diperbarui! Total: {$totalJumlah} unit.");
     }
 
     /**
@@ -236,17 +276,29 @@ public function index(Request $request)
 
     public function cetakLaporan()
     {
-        $barangs = Barang::with(['kategori', 'lokasi'])->get();
+        $tahun = Carbon::now()->year;
+
+        $barangs = Barang::with(['kategori', 'lokasi', 'units'])
+            ->whereYear('tanggal_pengadaan', $tahun)
+            ->get()
+            ->map(function ($barang) {
+                $barang->jumlah_baik = $barang->units->where('kondisi', 'Baik')->count();
+                $barang->jumlah_rusak = $barang->units->where('kondisi', 'Rusak')->count();
+                $barang->jumlah_berat = $barang->units->where('kondisi', 'Rusak Berat')->count();
+                $barang->jumlah_barang = $barang->units->count();
+                return $barang;
+            });
 
         $data = [
-            'title' => 'Laporan Data Barang Inventaris',
+            'title' => 'Laporan Data Barang Inventaris Tahun ' . $tahun,
             'date' => date('d F Y'),
             'barangs' => $barangs,
+            'tahun' => $tahun,
         ];
 
         $pdf = Pdf::loadView('barang.laporan', $data);
 
-        return $pdf->stream('laporan-inventaris-barang.pdf');
+        return $pdf->stream("laporan-inventaris-barang-{$tahun}.pdf");
     }
 
     public function search(Request $request)
@@ -341,6 +393,27 @@ public function index(Request $request)
                 $unit = $barang->units()->where('kode_unit', 'like', "%-$nomor")->first();
                 if ($unit) {
                     $unit->delete();
+                }
+            }
+        }
+        
+        if ($request->filled('frekuensi_perawatan')) {
+            $frekuensi = trim($request->frekuensi_perawatan);
+            $frekuensiText = $frekuensi . ' sekali'; // tambahin kata “sekali”
+
+            if ($request->mode_frekuensi === 'semua') {
+                // ubah semua unit barang ini
+                foreach ($barang->units as $unit) {
+                    $unit->update(['frekuensi_perawatan' => $frekuensiText]);
+                }
+            } elseif ($request->mode_frekuensi === 'custom' && $request->filled('nomor_custom')) {
+                $nomorArray = array_map('trim', explode(',', $request->nomor_custom));
+                foreach ($barang->units as $unit) {
+                    $belakang = explode('-', $unit->kode_unit);
+                    $nomor = end($belakang);
+                    if (in_array($nomor, $nomorArray)) {
+                        $unit->update(['frekuensi_perawatan' => $frekuensiText]);
+                    }
                 }
             }
         }

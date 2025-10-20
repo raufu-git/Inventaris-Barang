@@ -18,22 +18,31 @@ class UnitController extends Controller
     public function update(Request $request, Unit $unit)
     {
         $validated = $request->validate([
-            'kondisi' => 'required|in:Baik,Rusak Ringan,Rusak Berat',
+            'kondisi' => 'nullable|in:Baik,Rusak Ringan,Rusak Berat',
             'frekuensi_perawatan' => 'nullable|string|max:100',
             'tanggal_perawatan_selanjutnya' => 'nullable|date',
+            'mode_frekuensi' => 'nullable|in:semua,custom',
+            'nomor_custom' => 'nullable|string',
         ]);
 
-        // kalau user kosongin frekuensi, unit ngikut frekuensi default dari parent barang
+        // ✅ Tambahkan 'sekali' kalau belum ada
+        if (!empty($validated['frekuensi_perawatan'])) {
+            $frekuensi = strtolower($validated['frekuensi_perawatan']);
+            if (!str_contains($frekuensi, 'sekali')) {
+                $validated['frekuensi_perawatan'] .= ' sekali';
+            }
+        }
+
+        // ✅ Kalau user kosongin frekuensi → pakai default dari barang
         if (empty($validated['frekuensi_perawatan'])) {
             $validated['frekuensi_perawatan'] = $unit->barang->frekuensi_perawatan;
         }
 
-        // kalau tanggal kosong, set otomatis berdasarkan frekuensi (kalau ada)
-        // kalau tanggal kosong, set otomatis berdasarkan frekuensi (kalau ada)
+        // ✅ Hitung tanggal otomatis kalau kosong tapi frekuensi ada
         if (empty($validated['tanggal_perawatan_selanjutnya']) && !empty($validated['frekuensi_perawatan'])) {
             $frekuensi = strtolower($validated['frekuensi_perawatan']);
 
-            // ambil angka dari string (contoh: "3 bulan" -> 3)
+            // Ambil angka dari string (contoh: "3 bulan" → 3)
             preg_match('/(\d+)/', $frekuensi, $angka);
             $jumlah = isset($angka[1]) ? (int)$angka[1] : 1;
 
@@ -46,12 +55,46 @@ class UnitController extends Controller
             };
         }
 
+        // ✅ Kalau mode ubah semua → update semua unit di barang ini
+        if (($validated['mode_frekuensi'] ?? null) === 'semua') {
+            Unit::where('barang_id', $unit->barang_id)
+                ->update([
+                    'frekuensi_perawatan' => $validated['frekuensi_perawatan'],
+                    'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'],
+                ]);
+
+            return redirect()
+                ->route('barang.show', $unit->barang_id)
+                ->with('success', 'Frekuensi semua unit berhasil diperbarui!');
+        }
+
+        // ✅ Kalau mode custom → update unit berdasarkan nomor_custom
+        if (($validated['mode_frekuensi'] ?? null) === 'custom' && !empty($validated['nomor_custom'])) {
+            $nomorList = collect(explode(',', $validated['nomor_custom']))
+                ->map(fn($n) => trim($n))
+                ->filter()
+                ->toArray();
+
+            Unit::where('barang_id', $unit->barang_id)
+                ->whereIn('nomor_unit', $nomorList)
+                ->update([
+                    'frekuensi_perawatan' => $validated['frekuensi_perawatan'],
+                    'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'],
+                ]);
+
+            return redirect()
+                ->route('barang.show', $unit->barang_id)
+                ->with('success', 'Frekuensi unit tertentu berhasil diperbarui!');
+        }
+
+        // ✅ Kalau nggak ada mode (update manual biasa)
         $unit->update($validated);
 
         return redirect()
             ->route('barang.show', $unit->barang_id)
             ->with('success', 'Unit berhasil diperbarui!');
     }
+
     public function updateFrekuensiKondisi(Request $request, Barang $barang)
 {
     $validated = $request->validate([

@@ -22,15 +22,23 @@
             <td>{{ $barang->lokasi->nama_lokasi }}</td>
             <td>{{ $barang->jumlah_barang }}  {{ $barang->satuan }}</td>
             <td>
-                @if ($barang->kondisi === 'Baik')
-                    <span class="badge bg-info">{{ $barang->kondisi }}</span>
-                @elseif ($barang->kondisi === 'Rusak Ringan')
-                    <span class="badge bg-warning text-dark">{{ $barang->kondisi }}</span>
-                @elseif ($barang->kondisi === 'Rusak Berat')
-                    <span class="badge bg-danger">{{ $barang->kondisi }}</span>
-                @else
-                    <span class="badge bg-secondary">{{ $barang->kondisi }}</span>
-                @endif
+                @php
+                    $unitCounts = \App\Models\Unit::where('barang_id', $barang->id)
+                        ->select('kondisi', \DB::raw('COUNT(*) as total'))
+                        ->groupBy('kondisi')
+                        ->pluck('total', 'kondisi')
+                        ->toArray();
+
+                    $baik = $unitCounts['Baik'] ?? 0;
+                    $ringan = $unitCounts['Rusak Ringan'] ?? 0;
+                    $berat = $unitCounts['Rusak Berat'] ?? 0;
+                @endphp
+
+                <div class="d-flex flex-column gap-1">
+                    <span class="badge badge-mini bg-info text-dark">Baik: {{ $baik }}</span>
+                    <span class="badge badge-mini bg-warning text-dark">Ringan: {{ $ringan }}</span>
+                    <span class="badge badge-mini bg-danger text-white">Berat: {{ $berat }}</span>
+                </div>
             </td>
             <td>{{ $barang->sumber_dana }}</td>
             <td class="text-end">
@@ -135,6 +143,17 @@
     background: #eafcea;
     transform: scale(0.98);
 }
+.w-fit {
+    width: fit-content;
+}
+.badge-mini {
+    font-size: 11px;       /* lebih kecil tapi masih kebaca jelas */
+    padding: 3px 6px;      /* lebih rapet */
+    border-radius: 6px;    /* biar tetap smooth */
+    line-height: 1.1;
+    width: fit-content;
+}
+
 
 </style>
 
