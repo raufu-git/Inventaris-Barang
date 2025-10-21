@@ -42,8 +42,8 @@ public function index(Request $request)
 
     $today = \Carbon\Carbon::today();
     $reminders = Barang::whereNotNull('tanggal_perawatan_selanjutnya')
-        ->whereDate('tanggal_perawatan_selanjutnya', '<=', $today)
-        ->get();
+    ->whereDate('tanggal_perawatan_selanjutnya', '<=', Carbon::now()->addDays(7))
+    ->get();
 
     return view('barang.index', compact('barangs', 'reminders'));
 }

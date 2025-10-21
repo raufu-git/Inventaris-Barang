@@ -67,12 +67,28 @@
     @foreach ($reminders as $index => $barang)
         @php
             $next = \Carbon\Carbon::parse($barang->tanggal_perawatan_selanjutnya);
+            $hariIni = \Carbon\Carbon::today();
+            $selisihHari = $hariIni->diffInDays($next, false); // false biar nilai negatif kalau sudah lewat
+
+            // Cek status tanggal
             $isToday = $next->isToday();
             $isPast = $next->isPast() && !$next->isToday();
-            $warna = $isPast ? 'bg-danger text-white' : 'bg-warning text-dark';
-            $pesan = $isPast
-                ? "⏰ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> sudah lewat (<em>{$next->translatedFormat('d F Y')}</em>)"
-                : "⚠️ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> hari ini!";
+            $isSoon = !$isPast && !$isToday && $selisihHari <= 7; // kalau tinggal <=7 hari
+
+            // Warna & pesan
+            if ($isPast) {
+                $warna = 'bg-danger text-white';
+                $pesan = "⏰ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> sudah lewat (<em>{$next->translatedFormat('d F Y')}</em>)";
+            } elseif ($isToday) {
+                $warna = 'bg-warning text-dark';
+                $pesan = "⚠️ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> hari ini!";
+            } elseif ($isSoon) {
+                $warna = 'bg-info text-dark';
+                $hariTersisa = $selisihHari === 0 ? 'hari ini' : "{$selisihHari} hari lagi";
+                $pesan = "📆 Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> tinggal <strong>{$hariTersisa}</strong> (<em>{$next->translatedFormat('d F Y')}</em>)";
+            } else {
+                continue; // skip kalau belum masuk seminggu
+            }
         @endphp
 
         <div class="toast align-items-center text-bg-light border-0 mb-2 shadow reminder-toast"

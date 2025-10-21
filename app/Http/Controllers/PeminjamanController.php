@@ -76,8 +76,10 @@ class PeminjamanController extends Controller implements HasMiddleware
         ]);
 
         $barang = Barang::find($validated['barang_id']);
-        if ($barang->jumlah_barang <= 0) {
-            return back()->with('error', 'Stok barang tidak mencukupi.');
+
+        // 🔥 Cek apakah stok cukup
+        if ($barang->jumlah_barang < $validated['jumlah_pinjam']) {
+            return back()->with('error', 'Jumlah barang yang dipinjam melebihi stok yang tersedia.');
         }
 
         Peminjaman::create([
