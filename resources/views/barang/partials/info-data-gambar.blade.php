@@ -125,7 +125,7 @@
                   <td>{{ $unit->frekuensi_perawatan ?? $barang->frekuensi_perawatan ?? '-' }}</td>
                   <td>{{ $next ? $next->translatedFormat('d F Y') : '-' }}</td>
                   <td>
-                    <form action="{{ route('barang.konfirmasiPerawatan', $unit->id) }}" method="POST">
+                    <form action="{{ route('unit.konfirmasiPerawatan', $unit->id) }}" method="POST">
                       @csrf
                       @if ($next && ($next->isPast() || $next->isToday()))
                         <button type="submit" class="btn btn-success btn-sm d-flex align-items-center gap-1">
@@ -348,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${unit.frekuensi_perawatan || unit.barang_frekuensi || "-"}</td>
                             <td>${nextText}</td>
                             <td>
-                                <form action="/barang/konfirmasi/${unit.id}" method="POST">
+                                <form action="/unit/konfirmasi/${unit.id}" method="POST">
                                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                     ${buttonHTML}
                                 </form>

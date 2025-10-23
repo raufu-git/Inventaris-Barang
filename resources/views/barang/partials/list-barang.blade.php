@@ -62,38 +62,34 @@
         </tr>
     @endforelse
 </x-table-list>
-<!-- Tempat munculnya semua toast -->
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-    @foreach ($reminders as $index => $barang)
+    @foreach ($reminders as $index => $unit)
         @php
-            $next = \Carbon\Carbon::parse($barang->tanggal_perawatan_selanjutnya);
+            $next = \Carbon\Carbon::parse($unit->tanggal_perawatan_selanjutnya);
             $hariIni = \Carbon\Carbon::today();
-            $selisihHari = $hariIni->diffInDays($next, false); // false biar nilai negatif kalau sudah lewat
+            $selisihHari = $hariIni->diffInDays($next, false);
 
-            // Cek status tanggal
             $isToday = $next->isToday();
             $isPast = $next->isPast() && !$next->isToday();
-            $isSoon = !$isPast && !$isToday && $selisihHari <= 7; // kalau tinggal <=7 hari
+            $isSoon = !$isPast && !$isToday && $selisihHari <= 7;
 
-            // Warna & pesan
             if ($isPast) {
                 $warna = 'bg-danger text-white';
-                $pesan = "⏰ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> sudah lewat (<em>{$next->translatedFormat('d F Y')}</em>)";
+                $pesan = "⏰ Jadwal perawatan untuk unit <strong>{$unit->kode_unit}</strong> ({$unit->barang->nama_barang}) sudah lewat (<em>{$next->translatedFormat('d F Y')}</em>)";
             } elseif ($isToday) {
                 $warna = 'bg-warning text-dark';
-                $pesan = "⚠️ Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> hari ini!";
+                $pesan = "⚠️ Jadwal perawatan untuk unit <strong>{$unit->kode_unit}</strong> ({$unit->barang->nama_barang}) hari ini!";
             } elseif ($isSoon) {
                 $warna = 'bg-info text-dark';
-                $hariTersisa = $selisihHari === 0 ? 'hari ini' : "{$selisihHari} hari lagi";
-                $pesan = "📆 Jadwal perawatan <strong class='nama-barang'>{$barang->nama_barang}</strong> tinggal <strong>{$hariTersisa}</strong> (<em>{$next->translatedFormat('d F Y')}</em>)";
+                $pesan = "📆 Jadwal perawatan untuk unit <strong>{$unit->kode_unit}</strong> ({$unit->barang->nama_barang}) tinggal <strong>{$selisihHari} hari lagi</strong> (<em>{$next->translatedFormat('d F Y')}</em>)";
             } else {
-                continue; // skip kalau belum masuk seminggu
+                continue;
             }
         @endphp
 
         <div class="toast align-items-center text-bg-light border-0 mb-2 shadow reminder-toast"
-            role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500"
-            style="animation-delay: {{ $index * 0.7 }}s;">
+             role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500"
+             style="animation-delay: {{ $index * 0.7 }}s;">
             <div class="toast-header {{ $warna }}">
                 <strong class="me-auto">🔧 Pengingat Perawatan</strong>
                 <small>{{ now()->translatedFormat('H:i') }}</small>
@@ -177,7 +173,7 @@
     document.addEventListener('DOMContentLoaded', function () {
         const toastElList = document.querySelectorAll('.toast');
         toastElList.forEach((toastEl, i) => {
-            const delay = i * 400; 
+            const delay = i * 500; 
             setTimeout(() => {
                 const toast = new bootstrap.Toast(toastEl);
                 toast.show();

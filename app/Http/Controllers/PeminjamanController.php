@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Peminjaman;
 use App\Models\Barang;
+use App\Models\Unit;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf; // untuk laporan PDF
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -58,49 +59,65 @@ class PeminjamanController extends Controller implements HasMiddleware
     public function create()
     {
         $barangs = Barang::all();
-        return view('peminjaman.create', compact('barangs'));
+    $units = \App\Models\Unit::with('barang')
+        ->whereIn('kondisi', ['Baik', 'Rusak Ringan']) // cuma ambil yang kondisi baik/ringan
+        ->get();
+
+        return view('peminjaman.create', compact('barangs', 'units'));
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
-            'nama_peminjam' => 'required|string|max:150',
-            'tanggal_pinjam' => 'required|date',
-            'jumlah_pinjam' => 'required|integer|min:1',
-            'keterangan' => 'nullable|string',
-            'gambar' => 'nullable|image|max:10048',
-            'kondisi_awal' => 'nullable|string|max:25',
-            'no_hp' => 'nullable|string|max:20',
-            'kelas_divisi' => 'nullable|string|max:50',
-        ]);
+{
+    $validated = $request->validate([
+        'barang_id' => 'required|exists:barangs,id',
+        'unit_id' => 'required|exists:units,id', // ✅ tambahkan validasi unit
+        'nama_peminjam' => 'required|string|max:150',
+        'tanggal_pinjam' => 'required|date',
+        'jumlah_pinjam' => 'required|integer|min:1',
+        'keterangan' => 'nullable|string',
+        'gambar' => 'nullable|image|max:10048',
+        'no_hp' => 'nullable|string|max:20',
+        'kelas_divisi' => 'nullable|string|max:50',
+    ]);
 
-        $barang = Barang::find($validated['barang_id']);
+    $barang = Barang::findOrFail($validated['barang_id']);
+    $unit = Unit::findOrFail($validated['unit_id']);
 
-        // 🔥 Cek apakah stok cukup
-        if ($barang->jumlah_barang < $validated['jumlah_pinjam']) {
-            return back()->with('error', 'Jumlah barang yang dipinjam melebihi stok yang tersedia.');
-        }
+    // ✅ Pastikan unit masih tersedia (misal status = "Tersedia")
+    // if ($unit->status !== 'Tersedia') {
+    //     return back()->with('error', 'Unit ini sedang tidak tersedia untuk dipinjam.');
+    // }
 
-        Peminjaman::create([
-            'barang_id' => $validated['barang_id'],
-            'nama_peminjam' => $validated['nama_peminjam'],
-            'tanggal_pinjam' => $validated['tanggal_pinjam'],
-            'jumlah_pinjam' => $validated['jumlah_pinjam'],
-            'keterangan' => $validated['keterangan'] ?? null,
-            'kondisi_awal' => $validated['kondisi_awal'],
-            'no_hp' => $validated['no_hp'] ?? null,
-            'kelas_divisi' => $validated['kelas_divisi'] ?? null,
-        ]);
-
-        $barang->decrement('jumlah_barang', $validated['jumlah_pinjam']);
-
-        return redirect()->route('peminjaman.index')->with('success', 'Data peminjaman berhasil ditambahkan.');
+    // 🔥 Cek stok
+    if ($barang->jumlah_barang < $validated['jumlah_pinjam']) {
+        return back()->with('error', 'Jumlah barang yang dipinjam melebihi stok yang tersedia.');
     }
+
+    // ✅ Simpan data peminjaman
+    Peminjaman::create([
+        'barang_id' => $validated['barang_id'],
+        'unit_id' => $validated['unit_id'],
+        'nama_peminjam' => $validated['nama_peminjam'],
+        'tanggal_pinjam' => $validated['tanggal_pinjam'],
+        'jumlah_pinjam' => $validated['jumlah_pinjam'],
+        'keterangan' => $validated['keterangan'] ?? null,
+        'kondisi_awal' => $unit->kondisi ?? '-', // ambil langsung dari tabel units
+        'no_hp' => $validated['no_hp'] ?? null,
+        'kelas_divisi' => $validated['kelas_divisi'] ?? null,
+        'status' => 'Dipinjam',
+    ]);
+
+    // ✅ Kurangi stok barang + ubah status unit
+    $barang->decrement('jumlah_barang', $validated['jumlah_pinjam']);
+    $unit->update(['status' => 'Dipinjam']);
+
+    return redirect()->route('peminjaman.index')->with('success', 'Data peminjaman berhasil ditambahkan.');
+}
+
 
     public function show(Peminjaman $peminjaman)
     {
-        $peminjaman->load('barang'); // <-- ini penting
+        $peminjaman->load(['unit.barang']); // <-- ini penting
         return view('peminjaman.show', compact('peminjaman'));
     }
 

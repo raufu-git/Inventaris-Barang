@@ -31,12 +31,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/barang/laporan', [BarangController::class, 'cetakLaporan'])->name('barang.laporan');
     Route::get('/barang/search', [BarangController::class, 'search'])->name('barang.search');
     Route::resource('barang', BarangController::class);
-    Route::post('/barang/{id}/konfirmasi-perawatan', [BarangController::class, 'konfirmasiPerawatan'])
-    ->name('barang.konfirmasiPerawatan');
+    Route::post('/unit/{id}/konfirmasi', [UnitController::class, 'konfirmasiPerawatan'])
+        ->name('unit.konfirmasiPerawatan');
     Route::resource('units', UnitController::class)->only(['edit', 'update']);
     Route::put('/barang/{barang}/update-frekuensi-kondisi', [BarangController::class, 'updateFrekuensiKondisi'])
     ->name('barang.updateFrekuensiKondisi');
-Route::get('/barang/{barang}/units-json', [BarangController::class, 'unitsJson'])->name('barang.unitsJson');
+    Route::get('/barang/{barang}/units-json', [BarangController::class, 'unitsJson'])->name('barang.unitsJson');
+    Route::get('/units-by-barang/{id}', [App\Http\Controllers\UnitController::class, 'getUnitsByBarang']);
+Route::get('/barang/json/{id}', [BarangController::class, 'showJson'])->name('barang.showJson');
+
 });
 
 require __DIR__.'/auth.php';

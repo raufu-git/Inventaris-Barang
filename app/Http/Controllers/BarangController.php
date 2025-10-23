@@ -26,27 +26,27 @@ class BarangController extends Controller implements HasMiddleware
     /**
      * Display a listing of the resource.
      */
-public function index(Request $request)
-{
-    $sortOrder = $request->get('sort', 'desc');
-    $search = $request->search;
+    public function index(Request $request)
+    {
+        $sortOrder = $request->get('sort', 'desc');
+        $search = $request->search;
 
-    $barangs = Barang::with(['kategori', 'lokasi'])
-        ->when($search, function ($query, $search) {
-            $query->where('nama_barang', 'like', '%' . $search . '%')
-                  ->orWhere('kode_barang', 'like', '%' . $search . '%');
-        })
-        ->orderBy('created_at', $sortOrder)
-        ->paginate(10)
-        ->withQueryString();
+        $barangs = Barang::with(['kategori', 'lokasi'])
+            ->when($search, function ($query, $search) {
+                $query->where('nama_barang', 'like', '%' . $search . '%')
+                    ->orWhere('kode_barang', 'like', '%' . $search . '%');
+            })
+            ->orderBy('created_at', $sortOrder)
+            ->paginate(10)
+            ->withQueryString();
 
-    $today = \Carbon\Carbon::today();
-    $reminders = Barang::whereNotNull('tanggal_perawatan_selanjutnya')
-    ->whereDate('tanggal_perawatan_selanjutnya', '<=', Carbon::now()->addDays(7))
-    ->get();
+        $reminders = Unit::with('barang')
+            ->whereNotNull('tanggal_perawatan_selanjutnya')
+            ->whereDate('tanggal_perawatan_selanjutnya', '<=', Carbon::now()->addDays(7))
+            ->get();
 
-    return view('barang.index', compact('barangs', 'reminders'));
-}
+        return view('barang.index', compact('barangs', 'reminders'));
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -157,22 +157,66 @@ public function index(Request $request)
         $barang->load(['kategori', 'lokasi']);
         return view('barang.show', compact('barang'));
     }
+public function showJson($id)
+{
+    $barang = Barang::with(['kategori', 'lokasi'])->findOrFail($id);
+
+    // Ambil unit terkait yang kondisinya Baik atau Rusak Ringan
+    $units = $barang->units()
+        ->whereIn('kondisi', ['Baik', 'Rusak Ringan'])
+        ->get(['id', 'kode_unit', 'kondisi', 'tanggal_perawatan_selanjutnya']);
+
+    return response()->json([
+        'id' => $barang->id,
+        'nama_barang' => $barang->nama_barang,
+        'kategori' => $barang->kategori ? $barang->kategori->nama_kategori : '-',
+        'lokasi' => $barang->lokasi ? $barang->lokasi->nama_lokasi : '-',
+        'jumlah_barang' => $barang->jumlah_barang,
+        'satuan' => $barang->satuan,
+        'kondisi' => $barang->kondisi,
+        'tanggal_pengadaan' => $barang->tanggal_pengadaan,
+        'sumber_dana' => $barang->sumber_dana,
+        'updated_at' => $barang->updated_at,
+        'frekuensi_perawatan' => $barang->frekuensi_perawatan,
+        'tanggal_perawatan_selanjutnya' => $barang->tanggal_perawatan_selanjutnya,
+        'units' => $units,
+    ]);
+}
+
+
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Barang $barang)
-    {
-        $kategori = Kategori::all();
-        $lokasi = Lokasi::all();
+public function edit(Barang $barang)
+{
+    $kategori = Kategori::all();
+    $lokasi = Lokasi::all();
 
-        // Hitung jumlah kondisi dari tabel units
-        $jumlahBaik = $barang->units()->where('kondisi', 'Baik')->count();
-        $jumlahRusakRingan = $barang->units()->where('kondisi', 'Rusak Ringan')->count();
-        $jumlahRusakBerat = $barang->units()->where('kondisi', 'Rusak Berat')->count();
+    $frekuensiOptions = [
+        ['value' => '1 bulan sekali', 'label' => '1 Bulan Sekali'],
+        ['value' => '2 bulan sekali', 'label' => '2 Bulan Sekali'],
+        ['value' => '3 bulan sekali', 'label' => '3 Bulan Sekali'],
+        ['value' => '6 bulan sekali', 'label' => '6 Bulan Sekali'],
+        ['value' => '12 bulan sekali', 'label' => '1 Tahun Sekali'],
+        ['value' => 'lainnya', 'label' => 'Lainnya'],
+    ];
 
-        return view('barang.edit', compact('barang', 'kategori', 'lokasi', 'jumlahBaik', 'jumlahRusakRingan', 'jumlahRusakBerat'));
-    }
+    $jumlahBaik = $barang->units()->where('kondisi', 'Baik')->count();
+    $jumlahRusakRingan = $barang->units()->where('kondisi', 'Rusak Ringan')->count();
+    $jumlahRusakBerat = $barang->units()->where('kondisi', 'Rusak Berat')->count();
+
+    return view('barang.edit', compact(
+        'barang',
+        'kategori',
+        'lokasi',
+        'frekuensiOptions',
+        'jumlahBaik',
+        'jumlahRusakRingan',
+        'jumlahRusakBerat'
+    ));
+}
+
 
     /**
      * Update the specified resource in storage.
@@ -225,9 +269,9 @@ public function index(Request $request)
             'sumber_dana' => $validated['sumber_dana'],
             'tanggal_pengadaan' => $validated['tanggal_pengadaan'],
             'gambar' => $validated['gambar'] ?? $barang->gambar,
-            'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? null,
+            'frekuensi_perawatan' => $validated['frekuensi_perawatan'] ?? $barang->frekuensi_perawatan,
             'tanggal_perawatan_selanjutnya' => $validated['tanggal_perawatan_selanjutnya'] ?? null,
-            'butuh_perawatan' => $request->filled('frekuensi_perawatan'),
+            'butuh_perawatan' => !empty($validated['frekuensi_perawatan'] ?? $barang->frekuensi_perawatan),
         ]);
 
         // 🔁 Hapus semua unit lama dan regenerasi (biar kondisi update sesuai input baru)

@@ -92,14 +92,18 @@
         ['value' => '12 bulan sekali', 'label' => '1 Tahun Sekali'],
         ['value' => 'lainnya', 'label' => 'Lainnya'],
     ];
+
+    $frekuensiValue = $barang->frekuensi_perawatan;
+    $isCustomFrekuensi = !collect($frekuensiOptions)->pluck('value')->contains($frekuensiValue);
 @endphp
+
 
 <div class="row mb-3">
     <div class="col-md-6">
         <x-form-select 
             label="Frekuensi Perawatan" 
             name="frekuensi_perawatan" 
-            :value="$barang->frekuensi_perawatan"
+            :value="$isCustomFrekuensi ? 'lainnya' : $frekuensiValue"
             :option-data="$frekuensiOptions"
             option-label="label"
             option-value="value"
@@ -165,26 +169,26 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const jumlah = document.querySelector('input[name="jumlah_barang"]');
-  const cBaik  = document.querySelector('input[name="count_baik"]');
-  const cRing  = document.querySelector('input[name="count_ringan"]');
-  const cBerat = document.querySelector('input[name="count_berat"]');
-  const warnId = document.getElementById('distWarning-new') || document.getElementById('distWarning-{{ $barang->id ?? 'new' }}');
-  const submitBtn = document.querySelector('button[type="submit"]');
+    const jumlah = document.querySelector('input[name="jumlah_barang"]');
+    const cBaik  = document.querySelector('input[name="count_baik"]');
+    const cRing  = document.querySelector('input[name="count_ringan"]');
+    const cBerat = document.querySelector('input[name="count_berat"]');
+    const warnId = document.getElementById('distWarning-new') || document.getElementById('distWarning-{{ $barang->id ?? 'new' }}');
+    const submitBtn = document.querySelector('button[type="submit"]');
 
-  function checkSum() {
-    const total = (Number(cBaik?.value || 0) + Number(cRing?.value || 0) + Number(cBerat?.value || 0));
-    if (jumlah && jumlah.value && total !== 0 && Number(jumlah.value) !== total) {
-      warnId.style.display = 'block';
-      submitBtn.disabled = true;
-    } else {
-      warnId.style.display = 'none';
-      submitBtn.disabled = false;
+    function checkSum() {
+        const total = (Number(cBaik?.value || 0) + Number(cRing?.value || 0) + Number(cBerat?.value || 0));
+        if (jumlah && jumlah.value && total !== 0 && Number(jumlah.value) !== total) {
+        warnId.style.display = 'block';
+        submitBtn.disabled = true;
+        } else {
+        warnId.style.display = 'none';
+        submitBtn.disabled = false;
+        }
     }
-  }
 
-  [jumlah, cBaik, cRing, cBerat].forEach(e => e && e.addEventListener('input', checkSum));
-  checkSum();
+    [jumlah, cBaik, cRing, cBerat].forEach(e => e && e.addEventListener('input', checkSum));
+    checkSum();
 });
 </script>
 

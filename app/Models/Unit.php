@@ -21,4 +21,10 @@ class Unit extends Model
         return $this->belongsTo(\App\Models\Barang::class, 'barang_id');
     }
 
+public function peminjamans()
+{
+    return $this->hasMany(Peminjaman::class);
+}
+
+
 }

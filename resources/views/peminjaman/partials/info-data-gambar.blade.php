@@ -6,11 +6,11 @@
         </tr>
         <tr>
             <th>Nama Barang</th>
-            <td>{{ $peminjaman->barang->nama_barang }}</td>
+            <td>{{ $peminjaman->barang->nama_barang ?? '-' }}</td>
         </tr>
         <tr>
             <th>Sumber Dana</th>
-            <td>{{ $peminjaman->barang->sumber_dana }}</td>
+            <td>{{ $peminjaman->barang->sumber_dana ?? '-' }}</td>
         </tr>
         <tr>
             <th>Kondisi Saat Dipinjam</th>
@@ -18,15 +18,12 @@
                 @php
                     $kondisiAwal = $peminjaman->kondisi_awal ?? '-';
                 @endphp
-
                 @if ($kondisiAwal === 'Baik')
                     <span class="badge bg-info">{{ $kondisiAwal }}</span>
                 @elseif ($kondisiAwal === 'Rusak Ringan')
                     <span class="badge bg-warning text-dark">{{ $kondisiAwal }}</span>
                 @elseif ($kondisiAwal === 'Rusak Berat')
                     <span class="badge bg-danger">{{ $kondisiAwal }}</span>
-                @elseif ($kondisiAwal === 'Hilang')
-                    <span class="badge bg-dark">{{ $kondisiAwal }}</span>
                 @else
                     <span class="badge bg-secondary">{{ $kondisiAwal }}</span>
                 @endif
@@ -34,17 +31,16 @@
         </tr>
         <tr>
             <th>Jumlah Dipinjam</th>
-            <td>{{ $peminjaman->jumlah_pinjam }} {{ $peminjaman->barang->satuan }}</td>
+            <td>{{ $peminjaman->jumlah_pinjam }} {{ $peminjaman->unit->barang->satuan ?? '' }}</td>
         </tr>
         <tr>
             <th>Tanggal Pinjam</th>
-            <td>{{ $peminjaman->tanggal_pinjam }}</td>
+            <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_pinjam)->translatedFormat('d F Y, H:i:s') }}</td>
         </tr>
         <tr>
             <th>Tanggal Dikembalikan</th>
-            <td>{{ $peminjaman->tanggal_kembali ?? '-' }}</td>
+            <td>{{ \Carbon\Carbon::parse($peminjaman->tanggal_kembali)->translatedFormat('d F Y') }}</td>
         </tr>
-        <tr>
         <tr>
             <th>Status</th>
             <td>
@@ -57,14 +53,15 @@
             <th>Kondisi Saat Dikembalikan</th>
             <td>
                 @if ($peminjaman->kondisi_pengembalian)
-                    @if ($peminjaman->kondisi_pengembalian == 'Hilang')
-                        <span class="badge bg-danger">{{ $peminjaman->kondisi_pengembalian }}</span>
-                    @elseif ($peminjaman->kondisi_pengembalian == 'Rusak Ringan')
-                        <span class="badge bg-warning text-dark">{{ $peminjaman->kondisi_pengembalian }}</span>
-                    @elseif ($peminjaman->kondisi_pengembalian == 'Rusak Berat')
-                        <span class="badge bg-dark">{{ $peminjaman->kondisi_pengembalian }}</span>
+                    @php $kondisi = $peminjaman->kondisi_pengembalian; @endphp
+                    @if ($kondisi == 'Hilang')
+                        <span class="badge bg-danger">{{ $kondisi }}</span>
+                    @elseif ($kondisi == 'Rusak Ringan')
+                        <span class="badge bg-warning text-dark">{{ $kondisi }}</span>
+                    @elseif ($kondisi == 'Rusak Berat')
+                        <span class="badge bg-dark">{{ $kondisi }}</span>
                     @else
-                        <span class="badge bg-success">{{ $peminjaman->kondisi_pengembalian }}</span>
+                        <span class="badge bg-success">{{ $kondisi }}</span>
                     @endif
                 @else
                     <span>-</span>
@@ -81,7 +78,7 @@
         </tr>
         <tr>
             <th>Terakhir Diperbarui</th>
-            <td>{{ $peminjaman->updated_at->translatedFormat('d F Y, H:i:s') }}</td>
+            <td>{{ \Carbon\Carbon::parse($peminjaman->updated_at)->translatedFormat('d F Y, H:i:s') }}</td>
         </tr>
     </tbody>
 </table>

@@ -132,4 +132,66 @@ class UnitController extends Controller
     return redirect()->back()->with('success', 'Frekuensi dan kondisi barang berhasil diperbarui!');
 }
 
+public function konfirmasiPerawatan($id)
+    {
+        $unit = Unit::with('barang')->findOrFail($id);
+
+        // Cek apakah sudah waktunya perawatan
+        if ($unit->tanggal_perawatan_selanjutnya && now()->gte($unit->tanggal_perawatan_selanjutnya)) {
+
+            $frekuensi = $unit->frekuensi_perawatan ?? $unit->barang->frekuensi_perawatan ?? null;
+
+            if ($frekuensi) {
+                [$angka, $satuan] = explode(' ', strtolower($frekuensi));
+                $angka = (int) $angka;
+
+                switch ($satuan) {
+                    case 'hari':
+                    case 'day':
+                    case 'days':
+                        $unit->tanggal_perawatan_selanjutnya = Carbon::now()->addDays($angka);
+                        break;
+                    case 'minggu':
+                    case 'week':
+                    case 'weeks':
+                        $unit->tanggal_perawatan_selanjutnya = Carbon::now()->addWeeks($angka);
+                        break;
+                    case 'bulan':
+                    case 'month':
+                    case 'months':
+                        $unit->tanggal_perawatan_selanjutnya = Carbon::now()->addMonths($angka);
+                        break;
+                    case 'tahun':
+                    case 'year':
+                    case 'years':
+                        $unit->tanggal_perawatan_selanjutnya = Carbon::now()->addYears($angka);
+                        break;
+                    default:
+                        // fallback kalau formatnya aneh
+                        $unit->tanggal_perawatan_selanjutnya = Carbon::now();
+                        break;
+                }
+            } else {
+                // Kalau frekuensi kosong, kosongkan tanggal
+                $unit->tanggal_perawatan_selanjutnya = null;
+            }
+
+            $unit->save();
+
+            return back()->with('success', 'Perawatan unit berhasil dikonfirmasi!');
+        }
+
+        return back()->with('error', 'Belum waktunya perawatan untuk unit ini.');
+    }
+    public function getUnitsByBarang($id)
+{
+    $units = Unit::where('barang_id', $id)
+        ->whereIn('kondisi', ['Baik', 'Rusak Ringan'])
+        ->where('status', '!=', 'Dipinjam') // pastikan ada kolom status
+        ->select('id', 'kode_unit', 'kondisi')
+        ->get();
+
+    return response()->json($units);
+}
+
 }

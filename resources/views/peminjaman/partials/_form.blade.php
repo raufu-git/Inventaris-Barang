@@ -15,6 +15,15 @@
             </div>
             <ul id="daftar-barang" class="list-group position-absolute w-100" style="z-index: 1000; display: none; max-height: 200px; overflow-y: auto;"></ul>
         </div>
+{{-- 🏷️ Pilih Kode Unit --}}
+<div class="mb-3" id="unit-container" style="display:none;">
+    <label for="unit_id" class="form-label fw-bold">Pilih Kode Unit</label>
+    <select name="unit_id" id="unit_id" class="form-select" required>
+        <option value="">-- Pilih Unit --</option>
+    </select>
+</div>
+
+
 
         {{-- 👤 Nama, HP, Kelas, Jumlah --}}
         <div class="row mb-3">
@@ -171,35 +180,80 @@ $(document).ready(function() {
         $list.hide();
         $clear.show();
 
-        // 🔁 Ambil detail barang
-        $.ajax({
-            url: '{{ route("barang.search") }}',
-            dataType: 'json',
-            success: function(data) {
-                const selected = data.find(x => x.id == id);
-                if (selected) {
-                    const e = { params: { data: {
-                        id: selected.id,
-                        text: selected.nama_barang,
-                        kategori: selected.kategori?.nama_kategori,
-                        lokasi: selected.lokasi?.nama_lokasi,
-                        jumlah_barang: selected.jumlah_barang,
-                        satuan: selected.satuan,
-                        kondisi: selected.kondisi,
-                        tanggal_pengadaan: selected.tanggal_pengadaan,
-                        sumber_dana: selected.sumber_dana,
-                        updated_at: selected.updated_at,
-                        frekuensi_perawatan: selected.frekuensi_perawatan,
-                        tanggal_perawatan_selanjutnya: selected.tanggal_perawatan_selanjutnya,
-                    } }};
+// 🔁 Ambil detail barang
+$.ajax({
+    url: `/barang/json/${id}`,
+    method: 'GET',
+    dataType: 'json',
+    success: function(selected) {
+        // isi info barang
+        $('#info_nama').text(selected.nama_barang || '-');
+        $('#info_kategori').text(selected.kategori || '-');
+        $('#info_lokasi').text(selected.lokasi || '-');
+        $('#info_jumlah').text(`${selected.jumlah_barang} ${selected.satuan || ''}`);
+        $('#info_sumber_dana').text(selected.sumber_dana || '-');
+        $('#info_pengadaan').text(formatTanggal(selected.tanggal_pengadaan));
+        $('#info_update').text(formatTanggal(selected.updated_at));
+        $('#info_frekuensi').text(selected.frekuensi_perawatan || '-');
 
-                    $('#barang_id').trigger({
-                        type: 'select2:select',
-                        params: e.params
-                    });
-                }
-            }
-        });
+        // status perawatan
+        const perawatanHTML = hitungStatusPerawatan(selected.tanggal_perawatan_selanjutnya);
+        $('#info_selanjutnya').html(`${formatTanggal(selected.tanggal_perawatan_selanjutnya)}<br>${perawatanHTML}`);
+
+        // 🧱 tampilkan info barang
+        $('#info-barang').fadeIn();
+
+        // 🔁 isi dropdown kode unit
+        const $unitSelect = $('#unit_id');
+        $unitSelect.empty().append('<option value="">-- Pilih unit yang tersedia --</option>');
+        if (selected.units && selected.units.length > 0) {
+            selected.units.forEach(unit => {
+                $unitSelect.append(`
+                    <option value="${unit.id}">
+                        ${unit.kode_unit} — ${unit.kondisi}
+                    </option>
+                `);
+            });
+            $('#unit-container').fadeIn();
+        } else {
+            $unitSelect.append('<option value="">Tidak ada unit (baik/ringan)</option>');
+            $('#unit-container').fadeIn();
+        }
+    },
+    error: function() {
+        console.error('Gagal ambil data barang.');
+    }
+});
+
+        // 🎯 Ambil daftar unit berdasarkan barang terpilih
+$.ajax({
+    url: '/units-by-barang/' + id,
+    method: 'GET',
+    dataType: 'json',
+    success: function(units) {
+        const $unitSelect = $('#unit_id');
+        $unitSelect.empty().append('<option value="">-- Pilih unit yang tersedia --</option>');
+
+        if (units.length > 0) {
+            units.forEach(unit => {
+                // ✅ ini value-nya yang dikirim ke controller
+                $unitSelect.append(`
+                    <option value="${unit.id}">
+                        ${unit.kode_unit} — Kondisi: ${unit.kondisi}
+                    </option>
+                `);
+            });
+            $('#unit-container').fadeIn();
+        } else {
+            $unitSelect.append('<option value="">Tidak ada unit tersedia</option>');
+            $('#unit-container').fadeIn();
+        }
+    },
+    error: function() {
+        console.error('Gagal memuat data unit.');
+    }
+});
+
     });
 
     // ❌ Tombol clear
@@ -246,7 +300,7 @@ $(document).ready(function() {
         } else {
             const bulan = Math.floor(selisih / 30);
             pesan = bulan > 0
-                ? `🕒 Jadwal perawatan akan tiba dalam ${bulan} bulan (${selisih} hari) lagi`
+                ? `🕒 Jadwal perawatan akan tiba dalam ${bulan} bulan lagi`
                 : `🕒 Jadwal perawatan akan tiba dalam ${selisih} hari lagi`;
             badgeClass = 'bg-info text-dark';
         }
